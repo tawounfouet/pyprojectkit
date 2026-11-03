@@ -56,3 +56,7 @@ La [décision D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) 
 - [Revue de l'overlay d'apprentissage](R0-08_SOFTWARE_DESIGN_OVERLAY_REVIEW.md) et [première tranche verticale candidate](R0-09_FIRST_VERTICAL_SLICE_PROPOSAL.md).
 
 Les sept décisions demeurent `PROPOSED`. La revue de l'overlay et le vertical slice sont préparés, pas approuvés ni implémentés.
+
+## Qualification en vue du merge alpha sur main
+
+Voir [dossier de gate](../gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) et [registre des arbitrages M0 adoptés sous mandat technique](../adr/2026-11-03_M0_ALPHA_PILOT_DECISION_REGISTER.md). Le statut `PROPOSED` des fiches D-01..07 est leur statut historique initial ; l'option choisie pour le **seul pilote local synthétique** est consignée dans le registre d'intégration, sans prétendre à une review GitHub indépendante. La licence, la production et les données réelles restent exclues.
