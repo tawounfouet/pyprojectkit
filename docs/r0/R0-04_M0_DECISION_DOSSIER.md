@@ -102,4 +102,4 @@ Les tests proposés sont des critères de qualification futurs, pas des contrôl
 
 La [revue directe des 12 sources V1](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) a établi des collisions d'identifiants dans 07 V2. Elles doivent être corrigées dans la future baseline avant de valider les contrats M0 et d'écrire des tests par identifiant. La [proposition de remédiation](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) conserve les sens V1 et réserve des IDs V2 nouveaux.
 
-**Statut : BLOCKING / PENDING HUMAN DECISION.** Les options techniques D-01..07 restent `PROPOSED` et ne sont pas acceptées par ce document.
+**Statut D-SEM-01 : ACCEPTED - option A ([trace humaine](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)).** Le blocage de décision sémantique est levé. Il reste à intégrer la correction dans la baseline et à valider les options techniques D-01..D-07, qui restent `PROPOSED`.
