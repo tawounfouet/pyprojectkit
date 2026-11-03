@@ -321,7 +321,7 @@ Le dernier test dépend du backend et devient obligatoire pour revendiquer des �
 
 - `BR-ASSIGN-001` : une tâche ne peut être affectée qu'à un membre admissible, résolu dans le contexte de projet autorisé.
 - `BR-ASSIGN-002` : l'admissibilité d'un membre peut être déterminée par une `Policy` explicite (par exemple, son appartenance au projet).
-- `BR-ASSIGN-003` : une affectation terminée doit conserver sa date `unassigned_at` lorsqu'un historique d'affectation est géré ; toute simplification du stockage M0 requiert une décision de portée explicite.
+- `BR-ASSIGN-003` : une affectation terminée doit conserver `unassigned_at`.
 - `BR-ASSIGN-V2-001` (nouveau, proposé) : le premier modèle M0 admet au plus un assigné actif par tâche ; la multi-affectation est différée.
 - `BR-ASSIGN-V2-002` (nouveau, proposé) : aucune affectation ne contourne les transitions interdites d'un statut terminal.
 - `BR-PROGRESS-001` : le progrès global ne se déduit pas universellement du seul nombre de tâches terminées.
@@ -1154,3 +1154,21 @@ Les identifiants `INV-REL-*` restent des références historiques de conception 
 | V2.0.0 | 2026-11-02 | Classification des règles, M0/M1/M2/C3, nouvelles familles de provenance, snapshot, décision, sécurité et Pythos ; conservation des identifiants V1 | `REVIEW` |
 
 **Décision proposée** : `CONDITIONAL GO` pour la révision documentaire, sous réserve de validation des invariants nouveaux, d'arbitrage des ADR à impact, et de réconciliation avec les contrats des documents 08 à 12. Aucun GO technique ni aucune qualification runtime n'est affirmé.
+
+
+## Addendum de revue R0 du 3 novembre 2026 - NON APPROUVÉ
+
+Le corps de cette copie candidate rétablit **sans changement de sens historique** les définitions `BR-DELIV-001/002`, `BR-ASSIGN-001/002/003` et `INV-DATE-002`, conformément à l'annexe A et aux documents V1 originaux. Quatre identifiants distincts portent désormais les exigences ajoutées par la V2 :
+
+| Code candidat | Responsabilité nouvelle | Statut |
+|---|---|---|
+| `INV-DELIV-V2-001` | Référence d'un livrable vers un Project ou Milestone autorisé | PROPOSED |
+| `BR-ASSIGN-V2-001` | Au plus un assigné actif par Task en M0 | PROPOSED |
+| `BR-ASSIGN-V2-002` | Affectation interdite si elle contourne les états terminaux | PROPOSED |
+| `INV-DATE-V2-001` | Compatibilité des types et granularités de dates | PROPOSED |
+
+**Clarification de portée** : la conservation de `unassigned_at` s'applique aux affectations terminées dès que la fonction d'historisation d'affectations existe. Décider si cette fonction appartient réellement au premier vertical slice M0 est distinct de modifier la signification de `BR-ASSIGN-003`.
+
+**Ne pas interpréter le « CONDITIONAL GO » documentaire historique ci-dessus comme un `Q-R0` ou un `Q-M0` : ces gates sont `NOT_ASSESSED` tant qu'une décision humaine et les preuves requises n'ont pas été enregistrées.**
+
+Traçabilité : `docs/r0/2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md`, `docs/r0/R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md`, décision candidate `D-SEM-01`.
