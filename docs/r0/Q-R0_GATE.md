@@ -63,3 +63,7 @@ L'[enregistrement de l'approbation humaine](https://github.com/tawounfouet/pypro
 Les fiches [D-01..D-07](R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md) sont prêtes pour la [revue humaine #5](https://github.com/tawounfouet/pyprojectkit/issues/5), mais demeurent toutes `PROPOSED`. La [première tranche M0](R0-09_FIRST_VERTICAL_SLICE_PROPOSAL.md) est également une **proposition**, pas un mandat d'implémentation. L'[overlay](R0-08_SOFTWARE_DESIGN_OVERLAY_REVIEW.md) est revu pour son périmètre M0, mais non adopté formellement.
 
 Pour passer `Q-R0` : décider D-01..D-07, aligner/valider la baseline, établir la politique d'autorisation et la cible de repo, documenter les preuves exactes, puis enregistrer un verdict humain. **État global : NOT_ASSESSED.**
+
+## Addendum de qualification du 3 novembre 2026, après demande explicite d'intégration
+
+La [décision d'intégration alpha conditionnelle](../gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) et le [registre technique D-01..D-07](../adr/2026-11-03_M0_ALPHA_PILOT_DECISION_REGISTER.md) complètent l'historique de cette note. L'état `NOT_ASSESSED` inscrit dans les paragraphes précédents décrit **la situation avant la revue de qualification et le mandat de merge**. Le résultat le plus récent est `CONDITIONAL GO FOR MAIN INTEGRATION`, strictement borné au pilote local et synthétique, sans qualification de release ou production. Les conditions pré-merge et post-merge sont vérifiables dans le dossier de gate ; ne pas assimiler ces statuts à une autorisation de publication.
