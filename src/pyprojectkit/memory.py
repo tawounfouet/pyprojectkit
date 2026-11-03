@@ -4,7 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from threading import RLock
-from typing import Generic, TypeVar
+from typing import Callable, Generic, TypeVar
 
 from .domain import Conflict, Dependency, DomainEvent, Project, ProjectId, Task, TaskId, assert_acyclic
 
@@ -22,7 +22,8 @@ class InMemoryDatabase:
 
 
 class Repository(Generic[I, T]):
-    def __init__(self, original: dict[I, T]):
+    def __init__(self, original: dict[I, T], identity: Callable[[T], I]):
+        self._identity = identity
         self.original: dict[I, T] = deepcopy(original)
         self.staged: dict[I, T] = {}
         self.read_versions: dict[I, int | None] = {}
@@ -43,13 +44,13 @@ class Repository(Generic[I, T]):
         return result
 
     def add(self, obj: T) -> None:
-        identifier = obj.id
+        identifier = self._identity(obj)
         if identifier in self.staged or identifier in self.original:
             raise Conflict("Identité déjà utilisée")
         self.staged[identifier] = deepcopy(obj)
 
     def save(self, obj: T, *, expected_version: int) -> None:
-        identifier = obj.id
+        identifier = self._identity(obj)
         known = self.staged.get(identifier, self.original.get(identifier))
         if known is None or known.version != expected_version:
             raise Conflict("Version obsolète ou entité absente")
@@ -102,8 +103,8 @@ class InMemoryUnitOfWork:
         if self._active:
             raise RuntimeError("UnitOfWork déjà ouverte")
         with self.db._lock:
-            self.projects = Repository[ProjectId, Project](self.db.projects)
-            self.tasks = Repository[TaskId, Task](self.db.tasks)
+            self.projects = Repository[ProjectId, Project](self.db.projects, lambda p: p.id)
+            self.tasks = Repository[TaskId, Task](self.db.tasks, lambda t: t.id)
             self.dependencies = DependencyGraphPort(self.db.graphs)
         self._active = True
         return self
