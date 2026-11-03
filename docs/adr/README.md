@@ -52,3 +52,9 @@ Documents sources : `13_PYPROJECTKIT_IMPLEMENTATION_ROADMAP.md` section 6 ; spé
 Le [crosswalk des décisions V2](../r0/R0-10_ADR_CROSSWALK.md) rapproche les identifiants historiques par sujet. Le [dossier de décisions M0](../r0/R0-04_M0_DECISION_DOSSIER.md) présente sept arbitrages proposés et leurs alternatives.
 
 **Aucun de ces documents ne vaut `ACCEPTED` ; gate `Q-R0` toujours `NOT_ASSESSED`.**
+
+## Décision documentaire D-SEM-01 en cours
+
+La [fiche D-SEM-01](D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) concerne la compatibilité de six identifiants de règles V1/V2. Une [copie de revue 07 V2 corrigée](../specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) et sa [vérification statique](../r0/R0-02_D_SEM_01_STATIC_VALIDATION.md) sont disponibles sur la branche de PR.
+
+**D-SEM-01 est toujours PROPOSED**. Les ADR de design `ADR-PJ-RM-01..12` restent eux aussi non approuvés.
