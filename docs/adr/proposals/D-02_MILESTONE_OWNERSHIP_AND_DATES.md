@@ -4,7 +4,7 @@
 >
 > Mapping : `ADR-PJ-RM-02`, `ADR-06-002`, `ADR-07-001`, `ADR-APP-03`, `ADR-PJ-10-05`.
 
-## Décision à prendre
+## Options et décision à prendre
 
 Qui garantit l'identité, l'échéance et l'atteinte d'un jalon M0, et à quel endroit sa mutation est-elle sauvegardée ?
 
