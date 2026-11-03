@@ -51,9 +51,14 @@ class DependencyGraphPort(Protocol):
 
 
 class UnitOfWork(Protocol):
-    projects: ProjectRepository
-    tasks: TaskRepository
-    dependencies: DependencyGraphPort
+    @property
+    def projects(self) -> ProjectRepository: ...
+
+    @property
+    def tasks(self) -> TaskRepository: ...
+
+    @property
+    def dependencies(self) -> DependencyGraphPort: ...
 
     def __enter__(self) -> Self: ...
     def __exit__(
