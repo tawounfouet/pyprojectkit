@@ -9,7 +9,7 @@
 > **Langue** : français, termes DDD et Python conservés lorsque utiles  
 > **Statut** : `REVIEW` - **COPIE CANDIDATE R0 / CORRECTION PROPOSÉE, NON APPROUVÉE**
 > **Origine** : spécification V2 fournie le 3 novembre 2026 ; correction locale ciblée de six identifiants historiques V1/V2.
-> **Décision liée** : `D-SEM-01` - `PENDING HUMAN APPROVAL` ; aucune modification de la baseline canonique.  
+> **Décision liée** : `D-SEM-01` - `ACCEPTED OPTION A 2026-11-03` ; aucune modification de la baseline canonique.  
 > **Portée** : noyau M0, registre et continuité M1, contrats d'intégration Pythos M2, domaines avancés C3  
 > **Convention transversale** : `PYKIT_SOFTWARE_DESIGN_LEARNING_CONVENTION.md`  
 > **Règle d'interprétation** : spécifier une règle ne prouve ni son implémentation, ni sa qualification, ni son adoption en production.
@@ -1172,3 +1172,10 @@ Le corps de cette copie candidate rétablit **sans changement de sens historique
 **Ne pas interpréter le « CONDITIONAL GO » documentaire historique ci-dessus comme un `Q-R0` ou un `Q-M0` : ces gates sont `NOT_ASSESSED` tant qu'une décision humaine et les preuves requises n'ont pas été enregistrées.**
 
 Traçabilité : `docs/r0/2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md`, `docs/r0/R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md`, décision candidate `D-SEM-01`.
+
+
+## Décision de compatibilité D-SEM-01 (approuvée le 3 novembre 2026)
+
+L'**option A de D-SEM-01 est `ACCEPTED`** : les six IDs historiques conservent leur signification V1 et les nouveaux codes V2 restent distincts. Autorisation humaine consignée dans [l'issue GitHub #2](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) et dans [la fiche D-SEM-01](../../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md).
+
+**Limite** : la stratégie de nommage et les six restaurations sont approuvées ; cela ne vaut pas approbation des politiques métier additionnelles (ex. limite d'un assigné M0) ni du modèle de domaine entier. Ce fichier demeure une **copie de revue**, pas une baseline canonique fusionnée ou une API implémentée.
