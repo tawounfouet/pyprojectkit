@@ -18,7 +18,7 @@
 |---|---|---|
 | `Q-R0` | V1/V2 comparées, D-SEM-01 acceptée ; D-01..D-07 adoptés techniquement pour alpha ; baseline minimale/écarts documentés | **CONDITIONAL GO - alpha**, réserves de baseline V2 intégrale et revue indépendante |
 | `Q-M0` | SHA `ab2d4246c758f70b35507ec7fe016f9344da723c` ; CI run `41653259680`, Python 3.12/3.13, 17 tests PASS, wheel et mypy strict PASS | **CONDITIONAL GO - noyau InMemory** |
-| `Q-M1` | SHA M1 + correctif de lecture inter-owner, CI en cours de consolidation ; migrations SQLite, reprise, 5 familles, observations, preuves, snapshots/handoffs, refus des fuites | **CONDITIONAL GO - pilote local synthétique**, sous réserve de réussite CI HEAD avant merge |
+| `Q-M1` | SHA M1 + correctif de lecture inter-owner, CI SUCCESS #41684503892 sur SHA `6e52b9bed819dde7465933c3dfd782559d2c9f60` ; migrations SQLite, reprise, 5 familles, observations, preuves, snapshots/handoffs et refus de fuites | **CONDITIONAL GO - pilote local synthétique**, sous réserve de réussite CI HEAD avant merge |
 
 Le rapport M1 antérieur à la correction de sécurité `docs/qualification/M1_REPORT.md` demeure un historique de 40 tests, **pas une preuve du correctif ajouté**. Les preuves du nouveau HEAD seront réinscrites en addendum dans ce dossier lorsque la CI sera vérifiée.
 
@@ -40,7 +40,7 @@ Le rapport M1 antérieur à la correction de sécurité `docs/qualification/M1_R
 - [x] Qualif M0 sur SHA exact : 17 tests, mypy, wheel, CI Python 3.12/3.13.
 - [x] Qualif M1 de référence : 40 tests, restart, SQLite, preuves et absence cross-scope sur SHA antérieur.
 - [x] Correction d'un défaut d'accès entre owners de même scope et tests négatifs locaux.
-- [ ] Dernière CI M1 sur HEAD intégrant correctif et installation wheel isolée, 3.12 et 3.13, explicitement vérifiée dans le dossier.
+- [x] Dernière CI M1 sur HEAD intégrant correctif et installation wheel isolée, 3.12 et 3.13 : run GitHub Actions **#41684503892**, SHA **`6e52b9bed819dde7465933c3dfd782559d2c9f60`**, jobs 3.12/3.13 SUCCESS.
 - [ ] Inventaire PR et absence d'erreur bloquante au moment du merge.
 - [ ] Contrôle des SHA exacts, réconciliation des branches de base et validation des retargets.
 - [ ] Contrôle de la CI sur le HEAD final de `main` après fusion.
@@ -72,3 +72,15 @@ Toute fusion utilise un SHA attendu et l'API standard GitHub, sans réécriture 
 Le propriétaire a donné instruction d'exécuter la qualification jusqu'au merge, ce qui constitue un mandat d'intégration de l'alpha **si** les préconditions sont remplies. Le choix définitif d'une licence ou l'approbation d'une sécurité de production ne peuvent pas être déduits de cet ordre.
 
 **Ne pas annoncer de réussite de merge tant que l'API GitHub et la lecture post-merge de main ne l'ont pas confirmé.**
+
+## 7. Contrôle CI détaillé du correctif (avant merge)
+
+La lecture directe des logs du run GitHub Actions **#41684503892**, commit `6e52b9bed819dde7465933c3dfd782559d2c9f60` sur PR #10, confirme pour **chacun des jobs Python 3.12 et 3.13** :
+
+- `41 passed` (suite M0 et M1, y compris le test de visibilité owner/partage sur même scope) ;
+- `Success: no issues found in 13 source files` par `mypy --strict` ;
+- wheel `pyprojectkit-0.2.0a1-py3-none-any.whl` construite ;
+- wheel installée avec `pip --no-index --no-deps --find-links dist` dans un environnement virtuel isolé ;
+- `isolated import: OK` et CLI `--help` exécutée.
+
+Cette preuve est **sur le code corrigé**, pas seulement sur le rapport précédent à 40 tests. Les tests de sécurité restent limités à un hôte local de confiance.
