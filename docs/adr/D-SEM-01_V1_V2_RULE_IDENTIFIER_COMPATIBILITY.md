@@ -1,10 +1,10 @@
 # D-SEM-01 - Compatibilité sémantique des identifiants de règles V1/V2
 
-> **Statut : PROPOSED / AWAITING HUMAN DECISION**
+> **Statut : ACCEPTED (décision de compatibilité documentaire) / BASELINE PR STILL REVIEW**
 >
 > Date : 2026-11-03
 >
-> Décideur habilité : propriétaire du projet PyProjectKit (approbation explicite requise)
+> Décideur habilité : propriétaire du projet PyProjectKit (approbation explicite reçue le 2026-11-03)
 >
 > Type : décision de compatibilité documentaire, préalable à la baseline M0
 >
@@ -59,11 +59,20 @@ La spécification 07 V2 du 2 novembre 2026 réutilise six identifiants V1 pour d
 
 | Champ | Valeur |
 |---|---|
-| Verdict | **PENDING** |
-| Option retenue | **NON DECIDEE** |
-| Date de validation | **A DEFINIR** |
-| Référence de l'approbation | **A FOURNIR** |
-| Réserves | **A DEFINIR** |
-| Impacts sur le gate Q-R0 | **BLOCKING tant qu'aucune décision n'est enregistrée** |
+| Verdict | **ACCEPTED - option A** |
+| Option retenue | **Option A : préservation des six significations V1 et identifiants V2 distincts** |
+| Date de validation | **2026-11-03, vers 10:06 CET (Europe/Paris)** |
+| Référence de l'approbation | [Enregistrement GitHub du consentement exprimé dans la conversation](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) |
+| Réserves | **La décision ne tranche pas les sept ADR M0, ni le périmètre exact de la fonctionnalité d'historisation ; correction de la baseline en PR non fusionnée.** |
+| Impacts sur le gate Q-R0 | **Blocage de décision D-SEM-01 levé ; reste la consolidation de la baseline et les autres critères de Q-R0. Gate = NOT_ASSESSED.** |
 
-> La fusion d'une PR documentaire ne vaut ni approbation de D-SEM-01 ni passage de `Q-R0`. Si l'autorité approuve explicitement, cette fiche est mise à jour avec décision, référence, conséquences et correctifs appliqués aux spécifications canonisées.
+> **Portée de l'approbation** : le propriétaire a validé l'option A dans la conversation de pilotage ; le commentaire GitHub référencé ci-dessus en consigne la décision. Ceci n'est pas une revue GitHub signée par le propriétaire, ni une approbation de la PR entière ou des autres ADR. La copie corrigée de 07 V2 demeure sur branche de revue. `Q-R0` n'est pas évalué.
+
+## 7. Traçabilité de l'entrée en vigueur de la décision
+
+- **Autorité** : propriétaire humain du projet, approbation explicite par message dans cette conversation, 2026-11-03 vers 10:06 CET.
+- **Trace GitHub** : https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491.
+- **Portée** : identité et sémantique des six codes V1 ; séparation des quatre IDs V2.
+- **Preuve de préparation technique** : contrôle documentaire ciblé 10/10 sur le blob `e7dd0c629f6e1745446e035a3e03969650079fcc` ; ce n'est pas une qualification du runtime.
+- **Statut du correctif** : accepté en principe, présent dans la PR #4 en brouillon, non encore intégré à une baseline canonique approuvée.
+- **Décisions indépendantes** : D-01..D-07 en `PROPOSED`, `Q-R0 = NOT_ASSESSED`, `BOOT-01` non commencé.
