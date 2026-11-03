@@ -4,7 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from threading import RLock
-from typing import Generic, TypeVar, cast
+from typing import Generic, TypeVar
 
 from .domain import Conflict, Dependency, DomainEvent, Project, ProjectId, Task, TaskId, assert_acyclic
 
@@ -43,13 +43,13 @@ class Repository(Generic[I, T]):
         return result
 
     def add(self, obj: T) -> None:
-        identifier = cast(I, obj.id)
+        identifier = obj.id
         if identifier in self.staged or identifier in self.original:
             raise Conflict("Identité déjà utilisée")
         self.staged[identifier] = deepcopy(obj)
 
     def save(self, obj: T, *, expected_version: int) -> None:
-        identifier = cast(I, obj.id)
+        identifier = obj.id
         known = self.staged.get(identifier, self.original.get(identifier))
         if known is None or known.version != expected_version:
             raise Conflict("Version obsolète ou entité absente")
