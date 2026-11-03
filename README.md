@@ -1,6 +1,18 @@
 # PyProjectKit
 
-**Statut : PRE-BOOTSTRAP / R0 - Réconciliation documentaire et préparation.**
+## Prototype M0 exécutable sur cette branche
+
+**Branche d'implémentation en brouillon, non fusionnée.** Le noyau Python M0 est implémenté dans `src/pyprojectkit/`, avec une API applicative, des ports, une UoW InMemory, des tests et une CI Python 3.12/3.13. Le [guide du bootstrap](docs/bootstrap/README.md) et le [scénario de démonstration](examples/first_project.py) documentent l'installation et l'usage.
+
+```bash
+python -m pip install -e '.[test]'
+python -m pytest -q
+python examples/first_project.py
+```
+
+**Attention** : ce prototype ne représente pas encore une release ni un verdict de qualification. Les décisions architecturales D-01..D-07, la licence et les gates R0/M0 restent à ratifier. Aucune publication PyPI ou fusion automatique n'est autorisée.
+
+**Statut du référentiel canonique : R0 / REVIEW. Statut de cette branche : prototype M0 implémenté en PR.**
 
 PyProjectKit vise un noyau Python réutilisable de gestion de projets, tâches, jalons et dépendances, suivi d'un registre de projets et d'une intégration optionnelle avec Pythos. L'architecture et les contrats restent **proposés** tant que les arbitrages n'ont pas été validés.
 
