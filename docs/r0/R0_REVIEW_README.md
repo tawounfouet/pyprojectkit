@@ -4,12 +4,14 @@
 
 ## Documents proposés dans la branche de revue
 
-1. [Matrice de réconciliation V2](2026-11-03_V2_RECONCILIATION_MATRIX.md) - statut et risques par GAP.
-2. [Glossaire du domaine M0](R0-03_DOMAIN_GLOSSARY.md) - termes, noms, identités et temporalité.
-3. [Dossier d'arbitrages M0](R0-04_M0_DECISION_DOSSIER.md) - options, compromis, tests et décisions en attente.
-4. [Matrice de sécurité](R0-06_M0_SECURITY_MATRIX.md) - contrôles de refus minimaux.
-5. [Trace AC-001..AC-012](R0-07_M0_ACCEPTANCE_TRACEABILITY.md) - critères vers scénarios et futures preuves.
-6. [Crosswalk des ADR](R0-10_ADR_CROSSWALK.md) - déduplication par sujet, identifiants historiques conservés.
+1. [Audit direct des 12 sources V1](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) - compatibilité et collisions sémantiques.
+2. [Proposition de remédiation des codes](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) - patch conceptuel non approuvé.
+3. [Matrice de réconciliation V2](2026-11-03_V2_RECONCILIATION_MATRIX.md) - statut et risques par GAP.
+4. [Glossaire du domaine M0](R0-03_DOMAIN_GLOSSARY.md) - termes, noms, identités et temporalité.
+5. [Dossier d'arbitrages M0](R0-04_M0_DECISION_DOSSIER.md) - options, compromis, tests et décisions en attente.
+6. [Matrice de sécurité](R0-06_M0_SECURITY_MATRIX.md) - contrôles de refus minimaux.
+7. [Trace AC-001..AC-012](R0-07_M0_ACCEPTANCE_TRACEABILITY.md) - critères vers scénarios et futures preuves.
+8. [Crosswalk des ADR](R0-10_ADR_CROSSWALK.md) - déduplication par sujet, identifiants historiques conservés.
 
 ## R0 - Répartition des responsabilités
 
@@ -32,3 +34,8 @@
 - Aucun mandat BOOT-01 approuvé.
 
 La revue de ces documents peut progresser en parallèle, mais ne crée pas une autorisation implicite de BOOT-01.
+
+
+## Contrôle bloquant ajouté
+
+L'audit direct des V1 confirme que six identifiants du document 07 V2 ont un sens différent du contrat V1. Ces collisions empêchent de figer la baseline des règles et les scénarios de qualification par ID. Le dossier de patch n'a pas encore été appliqué aux V2 canoniques.
