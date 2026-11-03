@@ -1,5 +1,8 @@
 # R0-02 - Registre initial de réconciliation V2
 
+> **Mise à jour :** les résultats de la première vérification croisée sont dans [l'audit initial du 3 novembre](2026-11-03_INITIAL_V2_CONSISTENCY_AUDIT.md). Le tableau ci-dessous conserve les *questions d'origine*, et non leur dernière classification. En particulier, `GAP-01` et `GAP-10` apparaissent désormais sans conflit documentaire identifié dans le périmètre revu.
+
+
 > Statut : OPEN / PRELIMINARY - 2026-11-03
 >
 > Objectif : établir un inventaire des sujets à vérifier **avant** de considérer les spécifications comme une baseline approuvée.
