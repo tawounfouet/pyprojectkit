@@ -1,4 +1,4 @@
-name: M0 Bootstrap CI
+name: M1 Registry CI
 on:
   push:
     branches: [main, 'feat/**']
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  m0:
+  m1:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,6 +26,8 @@ jobs:
           python -m compileall -q src
           python -m pytest -q
           python examples/first_project.py
+          python -m pyprojectkit.m1.cli --help
+          python -m pyprojectkit.m1.cli --demo --db /tmp/pyprojectkit-demo.sqlite init
           python -m pip wheel --no-deps -w dist .
       - name: Strict static typing
         run: |
