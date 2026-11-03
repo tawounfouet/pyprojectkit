@@ -1,46 +1,64 @@
-# PyProjectKit
+# PyProjectKit - prototype M0 + M1 (registre local)
 
-## Prototype M0 exécutable sur cette branche
+**Statut** : implémentation de revue sur `feat/m1-registry-continuity`, empilée sur `feat/m0-bootstrap`. Ni Q-R0, ni Q-M0, ni Q-M1 n'ont été approuvés. **Pas de publication PyPI ni de traitement de données sensibles réelles.** Licence en attente.
 
-**Branche d'implémentation en brouillon, non fusionnée.** Le noyau Python M0 est implémenté dans `src/pyprojectkit/`, avec une API applicative, des ports, une UoW InMemory, des tests et une CI Python 3.12/3.13. Le [guide du bootstrap](docs/bootstrap/README.md) et le [scénario de démonstration](examples/first_project.py) documentent l'installation et l'usage.
+## Portée du prototype
+
+- **M0 préservé** : `Project`, `Task`, `Milestone`, dépendances acycliques, UoW InMemory et événements après commit.
+- **M1-A** : adaptateur `sqlite3` durable, migration 0001/0002 checksummée, versions optimistes, sauvegarde SQLite, ContextScope et cinq familles de registre.
+- **M1-B** : références externes scoped, Claim/Observation, EvidenceRef, assessments ciblés par version, cas de réconciliation avec conservation des contradictions, décisions et approbations distinctes.
+- **M1-C** : snapshots append-only, handoff, contexte de reprise et NextAction explicite (y compris `NONE_WITH_REASON`).
+- **M1-D** : tests multi-processus, tests de non-divulgation par scope et enfant privé, cinq familles synthétiques et profils de policy différents.
+
+### Démarrer
 
 ```bash
 python -m pip install -e '.[test]'
 python -m pytest -q
 python examples/first_project.py
+python examples/m1_registry_demo.py
 ```
 
-**Attention** : ce prototype ne représente pas encore une release ni un verdict de qualification. Les décisions architecturales D-01..D-07, la licence et les gates R0/M0 restent à ratifier. Aucune publication PyPI ou fusion automatique n'est autorisée.
+### CLI de démonstration
 
-**Statut du référentiel canonique : R0 / REVIEW. Statut de cette branche : prototype M0 implémenté en PR.**
+```bash
+pyprojectkit --demo --db /tmp/pyprojectkit-pilot.sqlite init
+pyprojectkit --demo --db /tmp/pyprojectkit-pilot.sqlite register --family PACKAGE --name 'Démo synthétique'
+pyprojectkit --demo --db /tmp/pyprojectkit-pilot.sqlite list
+```
 
-PyProjectKit vise un noyau Python réutilisable de gestion de projets, tâches, jalons et dépendances, suivi d'un registre de projets et d'une intégration optionnelle avec Pythos. L'architecture et les contrats restent **proposés** tant que les arbitrages n'ont pas été validés.
+La CLI refuse les appels sans `--demo`. **Le credential démonstratif intégré au code est public et ne constitue pas une authentification réelle.** Il n'est valable que pour les fixtures synthétiques. Les projets et scopes sont créés uniquement dans le chemin SQLite explicitement choisi, qui doit rester hors du dépôt et des artefacts CI.
 
-## Ordre de livraison
+### Usage Python M1
 
-1. **R0 - Réconciliation :** audit du dépôt, alignement des spécifications V2, ADR, critères d'acceptation, décision humaine `Q-R0`.
-2. **M0 - Domain Kernel :** première tranche métier exécutable et testée.
-3. **M1 - Project Registry :** registre durable, observations, preuves, snapshots et reprise.
-4. **M2 - Pythos Integration :** intégration optionnelle, mandats et rapports.
-5. **C3 - Extensions :** fonctionnalités avancées déclenchées par des besoins démontrés.
+```python
+from pathlib import Path
+from pyprojectkit.m1 import RegistryService, SqliteDatabase, TrustedHost
 
-## Gouvernance R0
+host = TrustedHost({"secret-provisionné-hors-payload": ("alice", {"scope-fixture": {
+    "SCOPE_CREATE", "PROJECT_VIEW", "PROJECT_CREATE", "TASK_VIEW", "RESUME"
+}})})
+actor = host.authenticate("secret-provisionné-hors-payload", "scope-fixture")
+service = RegistryService(SqliteDatabase(Path('/tmp/pyprojectkit-local.sqlite')), host)
+service.create_scope(actor)
+pid = service.register_project(actor, "Projet synthétique", "PACKAGE")
+print(service.resume(actor, pid).next_action.reason)
+```
 
-- [État initial du dépôt](docs/r0/2026-11-03_REPOSITORY_BASELINE.md)
-- [Registre des écarts](docs/r0/RECONCILIATION_REGISTER.md)
-- [Première revue de cohérence V2](docs/r0/2026-11-03_INITIAL_V2_CONSISTENCY_AUDIT.md)
-- [Index des ADR](docs/adr/README.md)
-- [Gate de passage Q-R0](docs/r0/Q-R0_GATE.md)
-- [Pilotage de la roadmap](docs/ROADMAP_TRACKING.md)
+Ne pas soumettre `actor_id`/`scope` fournis librement par une requête comme preuve d'identité. Seul un adaptateur hôte de confiance peut construire les principaux autorisés. Les accès au système de fichiers doivent être restreints par le système d'exploitation : le code Python exécuté localement avec accès direct au fichier SQLite n'est **pas** isolé par les policies applicatives.
 
-**Règle de preuve :** une spécification n'est pas une implémentation. Un `GO` ou une qualification exige des critères vérifiés sur des références exactes et l'approbation de l'autorité habilitée.
+## Architecture
 
-Le dépôt ne doit pas accueillir de données confidentielles de clients, d'employeurs ou de projets personnels. Les spécifications V2 sources restent en `REVIEW` tant que leur baseline n'est pas acceptée.
+```text
+src/pyprojectkit/{domain,ports,memory,service}.py   # M0 inchangé
+src/pyprojectkit/m1/schema.py                       # SQLite migrations
+src/pyprojectkit/m1/sqlite.py                       # UoW, repositories, graph, history
+src/pyprojectkit/m1/security.py                     # TrustedHost + verified context
+src/pyprojectkit/m1/models.py                       # M1 read models
+src/pyprojectkit/m1/service.py                      # M1 Commands/Queries
+src/pyprojectkit/m1/cli.py                          # démonstration synthétique
+```
 
-## Documents sources
+**Limites** : SQLite local non chiffré et non multi-serveur, UoW avec `BEGIN IMMEDIATE` sérialisant les writers, pas d'outbox distribuée, pas de connecteur IAM, OAuth, Pythos, GitHub/Drive sync, ni protection contre un programme Python hostile déjà dans le même processus. Une évaluation `PASS` est un **record applicatif déclaré par un évaluateur autorisé**, pas une vérification CI indépendante : les fixtures n'affirment pas une qualification de projet réel.
 
-- `13_PYPROJECTKIT_IMPLEMENTATION_ROADMAP.md` (version proposée, 2026-11-02)
-- `14_PYPROJECTKIT_IMPLEMENTATION_BOOTSTRAP_PLAN.md` (version proposée, 2026-11-03)
-- Spécifications métier PyProjectKit V2 `00`, `04` à `12`, convention Py*Kit et overlay PyProjectKit.
-
-L'inventaire et la publication des versions documentaires canoniques dans ce dépôt seront décidés durant R0. Aucune publication PyPI ni réalisation M0 n'est affirmée ici.
+Les preuves GitHub Actions, la matrice AC-013..AC-026 et les limites seront conservées dans `docs/qualification/M1_REPORT.md` en liaison avec l'issue GitHub M1 #8.
