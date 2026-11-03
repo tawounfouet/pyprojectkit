@@ -625,3 +625,40 @@ Next safe action
 | Convention / Overlay Py*Kit | Méthode de conception, ADR et tests | Apprentissage et gouvernance |
 
 **Conclusion** : M1 ne consiste pas à ajouter une base de données au CRUD M0. Il consiste à construire une **continuité durable, sourcée et autorisée** entre des projets hétérogènes, tout en conservant la séparation entre état métier, connaissance observée, preuve vérifiée et décision humaine.
+
+# Addendum D - Arbitrages M0/M1 du 3 novembre 2026
+
+> **Nature** : actualisation après publication initiale du plan, sans effacer son historique.
+>
+> **Mandat de cadrage technique délégué** : https://github.com/tawounfouet/pyprojectkit/issues/8#issuecomment-6607173475
+>
+> **Statut M1** : `DESIGN_ACCEPTED_FOR_LOCAL_PILOT / IMPLEMENTATION_NOT_STARTED`.
+
+## D.1 Qualification M0 consolidée
+
+La [consolidation technique M0](../qualification/2026-11-03_M0_TECHNICAL_QUALIFICATION_CONSOLIDATION.md) vérifie la CI GitHub Actions `41653259680` sur le SHA de la PR #6 `ab2d4246c758f70b35507ec7fe016f9344da723c`. Les deux jobs Python 3.12/3.13 sont `SUCCESS`, avec **17 tests réussis chacun**, wheel construite et `mypy --strict` sans erreur. Ce résultat qualifie **le prototype InMemory dans le périmètre testé**, pas une base SQLite ni un service sécurisé multi-tenant.
+
+Les gates `Q-R0` et `Q-M0` restent `NOT_ASSESSED` : les ADR M0 D-01..D-07, la baseline documentaire, la licence et l'autorisation de publication restent à ratifier. L'implémentation M0 demeure dans la PR #6 en brouillon.
+
+## D.2 Trois décisions techniques M1 acceptées pour le pilote local
+
+| ADR | Décision | Portée |
+|---|---|---|
+| [ADR-M1-01](../adr/m1/ADR-M1-01_SQLITE_DURABLE_STORE.md) | SQLite via `sqlite3` comme premier adapter durable substituable | Pilote local, tests restart/concurrence ; pas de production distribuée |
+| [ADR-M1-02](../adr/m1/ADR-M1-02_SCHEMA_MIGRATION_AND_UOW.md) | Migrations versionnées/checksum, FKs, UUID, version optimiste et UoW transactionnelle | Suite InMemory/SQLite, sauvegarde/restauration, preuve de rollback |
+| [ADR-M1-03](../adr/m1/ADR-M1-03_CONTEXT_SCOPE_AND_AUTHORIZATION.md) | Actor vérifié par hôte, ScopeId stable, policy ressource/scope fail-closed | Deux scopes, Query/count/pagination/export avant agrégation, données synthétiques |
+
+**Statut des trois ADR : `ACCEPTED_FOR_M1_LOCAL_PILOT` sous mandat technique délégué.** Le propriétaire n'a pas validé séparément chaque requête SQL ou règle de policy ; l'extension du périmètre exigera sa revue.
+
+Voir le [registre de décisions](../decisions/2026-11-03_M1_PERSISTENCE_SECURITY_DECISION_REGISTER.md) et la [checklist de préparation VS-M1-01](../m1/2026-11-03_M1_DECISION_READINESS_CHECKLIST.md).
+
+## D.3 Ce qui reste non décidé ou non exécuté
+
+- `ADR-M1-04..12` : `PROPOSED` ; pas d'adoption implicite.
+- `M1-01..20` : `NOT_STARTED`, aucune migration SQLite créée ou testée par cette revue.
+- `AC-013..026` : `NOT_EXECUTED`, aucune preuve de reprise M1.
+- Contrat Python précis de `VerifiedActorContext` et codes de permissions : à figer par tests avant implémentation M1-04.
+- Politique de rétention/chiffrement pour données sensibles : **non approuvée**, données réelles interdites dans le pilote.
+- `Q-M1` : `NOT_ASSESSED`.
+
+Le résultat de cette validation est un **GO de cadrage technique expérimental**, pas un GO de gate ni une autorisation de fusion, de release ou de démarrage automatique de code M1.
