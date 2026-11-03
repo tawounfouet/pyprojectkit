@@ -59,3 +59,13 @@ La [spécification 07 V2 candidate corrigée](specifications/review/07_PYPROJECT
 ## Décision D-SEM-01 actée
 
 **ACCEPTED (option A, 2026-11-03).** Validation humaine enregistrée [ici](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) et dans la [fiche de décision](adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md). Le périmètre approuvé est limité à la conservation du sens des six IDs V1 et à leur séparation des nouveaux codes V2. Les décisions D-01..D-07 et le gate `Q-R0` demeurent ouverts.
+
+## Avancement ADR M0 et première tranche de bootstrap
+
+Les sept arbitrages D-01..D-07 sont documentés avec alternatives et tests attendus dans [la matrice de revue](r0/R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md), suivie via [l'issue #5](https://github.com/tawounfouet/pyprojectkit/issues/5). La [revue de l'overlay](r0/R0-08_SOFTWARE_DESIGN_OVERLAY_REVIEW.md) et la [proposition de vertical slice](r0/R0-09_FIRST_VERTICAL_SLICE_PROPOSAL.md) ont été ajoutées.
+
+- `D-SEM-01` = ACCEPTED, uniquement compatibilité documentaire.
+- `D-01..D-07` = PROPOSED, approbation humaine en attente.
+- `R0-08` = REVIEW_DONE_FOR_M0, adoption en attente.
+- `R0-09` = SLICE_PROPOSED, pas de mandat `BOOT-01`.
+- `Q-R0` = NOT_ASSESSED.
