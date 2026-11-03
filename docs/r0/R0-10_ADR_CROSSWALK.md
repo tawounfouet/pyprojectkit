@@ -40,3 +40,9 @@ Pour chaque sujet M0, produire **une seule** fiche décisionnelle :
 Le verdict d'une revue documentaire **ne vaut pas** adoption. Une décision approuvée peut conserver plusieurs alias historiques vers le même sujet, sans multiplier les ADR canoniques.
 
 **État présent : tous les sujets en PROPOSED ou OPEN.**
+
+## Point de décision documentaire D-SEM-01 - collisions V1/V2
+
+La confrontation des **12 V1 originales** et des V2 a révélé des collisions d'identifiants dans 07 V2 (`BR-ASSIGN-001..003`, `BR-DELIV-001..002`, `INV-DATE-002`). Voir [audit des sources](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) et [patch conceptuel](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md).
+
+**D-SEM-01 = DECISION_REQUIRED**, préalable à la baseline M0. Il ne s'agit pas d'un ADR d'architecture supplémentaire : l'arbitrage concerne la compatibilité des codes de règles. Proposition : préserver la signification historique de chaque ID et introduire des IDs V2 non conflictuels. Cette proposition n'est pas approuvée.
