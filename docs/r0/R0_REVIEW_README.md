@@ -39,3 +39,11 @@ La revue de ces documents peut progresser en parallèle, mais ne crée pas une a
 ## Contrôle bloquant ajouté
 
 L'audit direct des V1 confirme que six identifiants du document 07 V2 ont un sens différent du contrat V1. Ces collisions empêchent de figer la baseline des règles et les scénarios de qualification par ID. Le dossier de patch n'a pas encore été appliqué aux V2 canoniques.
+
+## Pièces ajoutées pour la décision D-SEM-01
+
+- [Spécification 07 V2 corrigée, copie de revue](../specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md)
+- [Compte rendu de vérification statique sur le blob](R0-02_D_SEM_01_STATIC_VALIDATION.md)
+- [Fiche de décision formelle D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md)
+
+La copie de 07 V2 reste en `REVIEW`, n'est pas une baseline normative approuvée et n'est pas sur `main` tant que la PR n'est pas fusionnée. Le blocage sémantique est **techniquement préparé pour décision**, pas clos.
