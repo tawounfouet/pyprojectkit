@@ -44,10 +44,16 @@ Le dossier [`R0_REVIEW_README.md`](R0_REVIEW_README.md) référence la matrice d
 
 Le [dossier d'audit direct V1/V2](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) identifie six collisions de codes de règles entre les versions, parfois même entre le corps de 07 V2 et son annexe historique. Un [patch correctif proposé](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) attend approbation.
 
-**D-SEM-01 : NOT_RESOLVED / BLOCKING.** Ne pas déclarer `Q-R0 = GO` tant que cette collision n'est pas arbitrée et propagée vers la baseline et la traçabilité des tests.
+**D-SEM-01 : décision ACCEPTED le 2026-11-03.** La correction a été arbitrée par le propriétaire (option A), mais son intégration à la baseline et la traçabilité globale restent à vérifier avant `Q-R0`.
 
 ## Avancement D-SEM-01 : correction candidate effectivement déposée
 
 La [copie de revue de 07 V2](../specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) contient les six corrections de sens et quatre nouveaux IDs proposés. Le [contrôle statique ciblé](R0-02_D_SEM_01_STATIC_VALIDATION.md) a validé 10 assertions sur un blob identifié. La [fiche D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) présente les alternatives et sollicite une décision humaine.
 
-**Statut : PATCH_PROPOSED / DOCUMENT_CHECK_PASS / HUMAN_APPROVAL_PENDING.** Le caractère `BLOCKING` de `D-SEM-01` demeure. Ce contrôle documentaire ne constitue pas la validation `Q-R0` ni l'exécution d'un test du code M0.
+**Statut actualisé : D-SEM-01 ACCEPTED / PATCH_IN_DRAFT_PR / DOCUMENT_CHECK_PASS.** La décision humaine est consignée ; l'adoption de la baseline et les autres prérequis bloquent toujours l'évaluation `Q-R0`.
+
+## Approbation D-SEM-01 reçue le 3 novembre 2026
+
+L'[enregistrement de l'approbation humaine](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) permet de lever **le seul blocage de choix sémantique D-SEM-01**. La [fiche de décision](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) est désormais `ACCEPTED` pour son périmètre documentaire.
+
+**Non acquis** : revue et éventuelle fusion de la PR #4, baseline V2 alignée et adoptée, les sept choix de conception M0, contrôles d'autorisation, paquet Python, CI et décision formelle `Q-R0`. **Verdict global maintenu : NOT_ASSESSED.**
