@@ -1,20 +1,15 @@
 """Frontière Application M0 : Commands/Queries avec autorisation explicite."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from typing import Callable, Protocol
+from typing import Callable
 from uuid import UUID, uuid4
 
 from .domain import (
     AccessDenied, Conflict, Dependency, DependencyViolation, DomainEvent, InvalidStateTransition,
     Milestone, MilestoneId, NotFound, Project, ProjectId, ProjectStatus, Task, TaskId, TaskStatus,
 )
-from .memory import InMemoryUnitOfWork
-
-
-class Clock(Protocol):
-    def now(self) -> datetime: ...
+from .ports import ActorContext, AuthorizationPolicy, Clock, IdFactory, UnitOfWork
 
 
 class SystemClock:
@@ -30,23 +25,9 @@ class FixedClock:
         return self.value
 
 
-class IdFactory(Protocol):
-    def new(self) -> UUID: ...
-
-
 class UUIDFactory:
     def new(self) -> UUID:
         return uuid4()
-
-
-@dataclass(frozen=True, slots=True)
-class ActorContext:
-    actor_id: str
-    scope: str
-
-
-class AuthorizationPolicy(Protocol):
-    def require(self, actor: ActorContext, permission: str) -> None: ...
 
 
 class ExplicitPolicy:
@@ -61,7 +42,7 @@ class ExplicitPolicy:
 
 class ProjectService:
     def __init__(
-        self, uow_factory: Callable[[], InMemoryUnitOfWork], policy: AuthorizationPolicy,
+        self, uow_factory: Callable[[], UnitOfWork], policy: AuthorizationPolicy,
         clock: Clock | None = None, ids: IdFactory | None = None,
     ):
         self._uow = uow_factory
@@ -72,14 +53,14 @@ class ProjectService:
     def _event(self, name: str, entity_id: object, actor: ActorContext) -> DomainEvent:
         return DomainEvent(name, str(getattr(entity_id, "value", entity_id)), self._clock.now(), actor.actor_id)
 
-    def _project(self, uow: InMemoryUnitOfWork, project_id: ProjectId, actor: ActorContext, permission: str) -> Project:
+    def _project(self, uow: UnitOfWork, project_id: ProjectId, actor: ActorContext, permission: str) -> Project:
         self._policy.require(actor, permission)
         obj = uow.projects.get(project_id)
         if obj is None or obj.scope != actor.scope:
             raise NotFound("Ressource indisponible")
         return obj
 
-    def _task(self, uow: InMemoryUnitOfWork, task_id: TaskId, actor: ActorContext, permission: str) -> Task:
+    def _task(self, uow: UnitOfWork, task_id: TaskId, actor: ActorContext, permission: str) -> Task:
         self._policy.require(actor, permission)
         item = uow.tasks.get(task_id)
         if item is None:
