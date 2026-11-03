@@ -53,8 +53,8 @@ Le [crosswalk des décisions V2](../r0/R0-10_ADR_CROSSWALK.md) rapproche les ide
 
 **Aucun de ces documents ne vaut `ACCEPTED` ; gate `Q-R0` toujours `NOT_ASSESSED`.**
 
-## Décision documentaire D-SEM-01 en cours
+## Décision documentaire D-SEM-01 approuvée
 
 La [fiche D-SEM-01](D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) concerne la compatibilité de six identifiants de règles V1/V2. Une [copie de revue 07 V2 corrigée](../specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) et sa [vérification statique](../r0/R0-02_D_SEM_01_STATIC_VALIDATION.md) sont disponibles sur la branche de PR.
 
-**D-SEM-01 est toujours PROPOSED**. Les ADR de design `ADR-PJ-RM-01..12` restent eux aussi non approuvés.
+**D-SEM-01 = ACCEPTED (option A, 2026-11-03, [trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)).** Les ADR architecturaux `ADR-PJ-RM-01..12` restent `PROPOSED`, et le gate `Q-R0` reste `NOT_ASSESSED`.
