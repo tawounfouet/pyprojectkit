@@ -53,7 +53,7 @@ Ces divergences sont **établies par lecture des deux textes**, même si l'annex
 | `BR-ASSIGN-001` | V1 §23, ligne 765 : assigner uniquement un membre admissible | V2 §12, ligne 318 : référence Task et acteur/membre résolubles dans le scope | Conserver le critère d'admissibilité et ajouter scope comme précondition, pas comme remplacement |
 | `BR-ASSIGN-002` | V1 §23, ligne 771 : admissibilité déterminable par policy | V2 §12, ligne 319 : au plus un assigné actif M0 | **Conserver V1** sous `BR-ASSIGN-002` ; donner un **nouvel identifiant** à la limite d'assignés |
 | `BR-ASSIGN-003` | V1 §23, ligne 783 : conserver `unassigned_at` après fin d'affectation | V2 §12, ligne 320 : ne pas contourner les états terminaux | **Conserver V1** ; introduire une nouvelle règle pour les états terminaux |
-| `BR-DELIV-001` | V1 §? section Livrable, ligne 713 : accepter uniquement si critères obligatoires satisfaits | V2 §11, ligne 309 : livrable rattaché à projet ou jalon identifiable | **Conserver V1** ; donner un ID distinct à l'appartenance du livrable |
+| `BR-DELIV-001` | V1 §20, ligne 713 : accepter uniquement si critères obligatoires satisfaits | V2 §11, ligne 309 : livrable rattaché à projet ou jalon identifiable | **Conserver V1** ; donner un ID distinct à l'appartenance du livrable |
 | `BR-DELIV-002` | V1 ligne 719 : validation finale peut exiger `Approval` | V2 §11, ligne 310 : accepter si critères obligatoires satisfaits | **Conserver V1**, déplacer la règle de critères vers `BR-DELIV-001` |
 | `INV-DATE-002` | V1 §56, ligne 1480 : période vide permise seulement si modèle l'autorise | V2 §12, ligne 327 : compatibilité sémantique des bornes temporelles | **Conserver V1** sous cet ID et créer un nouvel ID pour compatibilité des types de bornes |
 
