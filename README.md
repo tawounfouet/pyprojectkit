@@ -16,6 +16,7 @@ PyProjectKit vise un noyau Python réutilisable de gestion de projets, tâches, 
 
 - [État initial du dépôt](docs/r0/2026-11-03_REPOSITORY_BASELINE.md)
 - [Registre des écarts](docs/r0/RECONCILIATION_REGISTER.md)
+- [Première revue de cohérence V2](docs/r0/2026-11-03_INITIAL_V2_CONSISTENCY_AUDIT.md)
 - [Index des ADR](docs/adr/README.md)
 - [Gate de passage Q-R0](docs/r0/Q-R0_GATE.md)
 - [Pilotage de la roadmap](docs/ROADMAP_TRACKING.md)
