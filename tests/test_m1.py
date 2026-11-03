@@ -465,3 +465,29 @@ def test_ac025_personal_finance_fixture_has_no_sensitive_raw_data(env):
     with db.connection() as conn:
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert not tables.intersection({"bank_transactions", "account_statements", "payment_cards"})
+
+
+def test_ac015_full_resume_after_restart_includes_open_task_snapshot_decision_and_handoff(env):
+    db, host, svc, actor, _ = env
+    pid = svc.register_project(actor, "full restart", "PACKAGE")
+    m0 = ProjectService(partial(SqliteUnitOfWork, db), ExplicitPolicy({"alice": M0_PERMS}), FixedClock(NOW))
+    task = m0.create_task(ActorContext("alice", "a"), ProjectId(UUID(pid)), "Task après redémarrage")
+    decision = svc.record_decision(actor, pid, subject="architecture", statement="SQLite pilote")
+    snapshot = svc.capture_snapshot(actor, pid)
+    handoff = svc.record_handoff(actor, pid, summary="Continuer la tâche", outcome="IN_PROGRESS")
+    code = '''import sys,json
+from pyprojectkit.m1 import TrustedHost, SqliteDatabase, RegistryService
+host=TrustedHost({"t":("alice",{"a":set(%r)})})
+ctx=RegistryService(SqliteDatabase(sys.argv[1]),host).resume(host.authenticate("t","a"),sys.argv[2])
+print(json.dumps({"open":list(ctx.open_tasks), "decisions":list(ctx.decisions),
+ "snapshot":ctx.latest_snapshot["id"],"handoff":ctx.latest_handoff["id"],
+ "next_id":ctx.next_action.task_id}))
+''' % sorted(ALL)
+    other = subprocess.run([sys.executable, "-c", code, str(db.path), pid], check=True,
+                           capture_output=True, text=True)
+    data = json.loads(other.stdout)
+    assert data["open"][0]["id"] == str(task.value)
+    assert any(x["id"] == decision for x in data["decisions"])
+    assert data["snapshot"] == snapshot
+    assert data["handoff"] == handoff
+    assert data["next_id"] == str(task.value)
