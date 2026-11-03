@@ -37,6 +37,12 @@
 
 **AUTH-01 - Critères M0.** Les AC-001..012 ne comportent pas un AC explicite « refus de lecture/commande hors scope », alors que 12 §4 l'exige pour M0 et 10 §19 possède `CT-10-M0-12`. Il faut **ajouter un test de sécurité transversal** sans falsifier ou renuméroter le texte normatif des AC. Classification : `TRACEABILITY_GAP`.
 
+## Écart entre infographie et spécification (VIS-01)
+
+L'infographie de bootstrap fournie indique **« Un Projet possède au moins une Task »** et figure une cardinalité `1..*`. En revanche, **06 V2 §11** prescrit explicitement `Project 1 -> 0..N Task`, et **08 V2 §11.1** permet `CreateProject` sans créer de Task simultanément. La cardinalité normative candidate est donc **0..N Task par Project**, chaque Task ayant exactement un Project parent. La règle `1..*` serait une nouvelle contrainte métier qui empêcherait un projet `DRAFT` sans tâche et ne doit pas être copiée du visuel dans le code.
+
+**Classification : CONTRADICTION_VISUEL_SPEC.** Proposition : corriger le prochain visuel à `0..*` et conserver le scénario `CreateProject` indépendant. Décision humaine toujours `PENDING` si la contrainte produit souhaitée diffère.
+
 ## Décisions bloquantes proposées avant BOOT-01
 
 1. Baseline et noms publics minimaux : GAP-05/07/08.
