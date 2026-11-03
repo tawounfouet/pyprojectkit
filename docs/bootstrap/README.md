@@ -20,7 +20,8 @@ python examples/first_project.py
 ## Découpage
 
 - `domain.py` : entités, value objects, statuts, erreurs et invariants sans I/O.
-- `memory.py` : stores InMemory, repositories, graphe et UnitOfWork avec working set isolé.
+- `ports.py` : contrats Protocol DIP pour repositories, graphe, UoW, autorisation, ID et Clock.
+- `memory.py` : adaptateur InMemory, repositories, graphe et UnitOfWork avec working set isolé.
 - `service.py` : API applicative, commands/queries, policy d'autorisation et événements transactionnels.
 
 Voir `docs/qualification/BOOTSTRAP_REPORT.md` pour le périmètre des preuves exactes et les réserves.
