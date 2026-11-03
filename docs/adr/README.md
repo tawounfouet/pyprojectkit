@@ -46,3 +46,9 @@ Décideur habilité : PENDING
 ```
 
 Documents sources : `13_PYPROJECTKIT_IMPLEMENTATION_ROADMAP.md` section 6 ; spécifications V2 04 à 12 ; convention commune Py*Kit.
+
+## Réconciliation du 3 novembre 2026 (en revue)
+
+Le [crosswalk des décisions V2](../r0/R0-10_ADR_CROSSWALK.md) rapproche les identifiants historiques par sujet. Le [dossier de décisions M0](../r0/R0-04_M0_DECISION_DOSSIER.md) présente sept arbitrages proposés et leurs alternatives.
+
+**Aucun de ces documents ne vaut `ACCEPTED` ; gate `Q-R0` toujours `NOT_ASSESSED`.**
