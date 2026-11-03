@@ -2,7 +2,8 @@
 
 > Date : 2026-11-03
 >
-> **Statut : IMPLEMENTED_FOR_SYNTHETIC_LOCAL_PILOT / FORMAL_Q_M1_NOT_ASSESSED**
+> **Statut initial : IMPLEMENTED_FOR_SYNTHETIC_LOCAL_PILOT / FORMAL_Q_M1_NOT_ASSESSED**  
+> **Mise à jour du 3 novembre 2026 : CONDITIONAL GO FOR MAIN INTEGRATION (LOCAL SYNTHETIC ALPHA ONLY)**. Les preuves initiales à 40 tests restent conservées comme historique ; voir addendum final.
 >
 > Projet : `tawounfouet/pyprojectkit`, PR #10 sur `feat/m1-registry-continuity`, base `feat/m0-bootstrap` (PR #6)
 >
@@ -132,3 +133,25 @@ Les catégories ci-dessous sont **qualifications de prototype synthétique**. La
 - **Prochaine action sûre** : revue des ADR restant ouverts, contrat de sécurité sur données réelles, revue des PR empilées, décision humaine formelle de gate.
 
 **Le développement de bout en bout est engagé et son code est disponible. La réussite d'une suite de tests ne remplace pas l'approbation et la qualification formelles du produit.**
+
+## 7. Addendum de qualification sécurité et intégration (3 novembre 2026)
+
+**Périmètre :** pilote local synthétique uniquement, dans le [gate d'intégration](../gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md). La qualification de production demeure exclue.
+
+### Correctif d'autorisation entre propriétaires
+
+Le défaut `SEC-PILOT-01` observé lors de la revue permettait à un lecteur possédant `PROJECT_VIEW` d'accéder à un Project d'un autre propriétaire dans le même scope, faute de vérification de partage. Il a été corrigé dans `m1/security.py`, `m1/service.py` et `tests/test_m1.py` : owner ou droit explicite `PROJECT_VIEW_ALL` / `PROJECT_VIEW:<project_uuid>` émis par `TrustedHost`. Une nouvelle régression vérifie aussi l'absence de fuite dans les listes, compteurs, facettes, lectures, exports et `ResumeContext`.
+
+### Preuves exactes du dernier code corrigé
+
+- GitHub Actions **run #41684503892**, code SHA `6e52b9bed819dde7465933c3dfd782559d2c9f60`, jobs Python 3.12 et 3.13 **SUCCESS**.
+- **41 tests PASS** sur chacun des deux environnements Python.
+- `mypy --strict` : `Success: no issues found in 13 source files` dans chaque job.
+- Wheel `pyprojectkit-0.2.0a1-py3-none-any.whl` construite puis installée dans une nouvelle venv par `pip --no-index --no-deps --find-links dist`, import `isolated import: OK` et CLI invoquée dans les deux jobs.
+- La revue ne comporte **aucune approbation GitHub indépendante**. Le propriétaire a demandé la qualification jusqu'au merge, ce qui est consigné dans [l'issue #1](https://github.com/tawounfouet/pyprojectkit/issues/1#issuecomment-6610885985).
+
+### Réserves restant bloquantes pour la publication ou la production
+
+Absence de licence déclarée, hôte de confiance non sécurisé contre un code Python hostile, base SQLite non chiffrée, absence d'Outbox durable, pas de politiques de rétention réelle et pas de qualification de service multi-tenant. Aucune de ces limites n'est présentée comme levée par les 41 tests. Les dossiers D-01..D-07 sont adoptés pour l'alpha locale sous mandat technique, **pas approuvés individuellement** par une review GitHub.
+
+**Verdict d'intégration : CONDITIONAL GO LOCAL_ALPHA ; release, PyPI, production et données sensibles : NOT_APPROVED.** La preuve post-merge sur le HEAD final de `main` devra être ajoutée au dossier de gate.
