@@ -72,3 +72,9 @@ La nouvelle exigence V2 de compatibilité temporelle reçoit `INV-DATE-V2-001` s
 - [ ] Les documents canoniques ne sont modifiés qu'après revue et décision tracée.
 
 **Décision : PENDING.** Ne pas confondre ce patch candidat avec une migration approuvée.
+
+## Application candidate sur branche de revue (mise à jour)
+
+La correction décrite ci-dessus a été **appliquée à une copie complète du document 07 V2**, située dans `docs/specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md`, sur la branche de la PR #4. Le [contrôle statique ciblé](R0-02_D_SEM_01_STATIC_VALIDATION.md) donne 10/10 assertions de définition satisfaites. La [décision D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) demeure `PENDING`.
+
+Cela ne signifie pas que le corpus V2 canonique a été remplacé, approuvé ou mis en œuvre dans le package M0.
