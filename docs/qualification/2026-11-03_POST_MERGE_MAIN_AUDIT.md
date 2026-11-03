@@ -87,6 +87,15 @@ L'acceptation technique des options D-01..D-07 relève d'un mandat d'intégratio
 
 ## 7. Addendum de vérification sur base main
 
-**PENDING** : exécution CI sur une PR documentaire dont la branche a été créée à partir de `main` après les quatre merges. Cette vérification n'est ni une exécution de CI sur le SHA de merge lui-même, ni une preuve de licence ; elle sert à détecter une régression due à la consolidation des branches. Après confirmation, ajouter le numéro de run, ses jobs et la version exacte du code.
+**VERIFIED** : la branche documentaire a été créée directement à partir de `main` au commit `95522030356b0320e9e057885ee2a06f359bf3c8`. Le comparateur GitHub entre `main` et la branche QA confirme **un seul fichier ajouté : ce rapport**, aucun changement applicatif ni CI. Le run GitHub Actions **#41686411069** a terminé avec succès sur Python 3.12 (job `126093227923`) et 3.13 (job `126093228343`). Les logs de chaque job montrent **41 tests PASS**, `mypy --strict` sans erreur sur **13 fichiers**, wheel `0.2.0a1` construite, installation dans une venv séparée via `--no-index` et import `isolated import: OK`. Cette exécution valide la base de code intégrée sur main avec le seul ajout documentaire de cette PR ; **elle n'est pas un run déclenché directement sur le SHA de merge 955220**.
 
 **Verdict à ce stade : les quatre merges sur main sont confirmés ; le prototype alpha local synthétique dispose d'une qualification conditionnelle et de preuves CI avant merge. Aucune release n'est autorisée.**
+
+
+## 8. Conclusion opérationnelle avant merge du rapport
+
+- **Code / branches** : PR #4/#6/#9/#10 effectivement fusionnées ; `main` sur `95522030356b0320e9e057885ee2a06f359bf3c8` au moment de la qualification.
+- **Contenu** : comparateur GitHub `main...docs/post-merge-qa-20261103` : exactement un nouveau document, zéro changement de code.
+- **Validation post-merge sur base `main`** : CI #41686411069, Python 3.12 et 3.13 `SUCCESS`, 41 tests et mypy strict, wheel venv offline PASS.
+- **Autorité** : intégration alpha expressément mandatée par le propriétaire ; aucun reviewer externe inventé.
+- **Verdict** : `INTEGRATION_ALPHA_LOCAL_SYNTHETIC_QUALIFIED_CONDITIONALLY`. Les garanties de release, de sécurité de production, de licence et de données sensibles restent **NOT_APPROVED**.
