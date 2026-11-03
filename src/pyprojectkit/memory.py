@@ -23,7 +23,7 @@ class InMemoryDatabase:
 
 class Repository(Generic[I, T]):
     def __init__(self, original: dict[I, T], identity: Callable[[T], I]):
-        self._identity = identity
+        self._identity: Callable[[T], I] = identity
         self.original: dict[I, T] = deepcopy(original)
         self.staged: dict[I, T] = {}
         self.read_versions: dict[I, int | None] = {}
