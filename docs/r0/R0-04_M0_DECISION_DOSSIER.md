@@ -1,0 +1,99 @@
+# R0-04 / R0-05 - Dossier d'arbitrages pour autoriser le noyau M0
+
+> Statut : PROPOSED - REVIEW REQUIRED
+>
+> Date : 2026-11-03
+>
+> Aucun choix de ce document n'est `ACCEPTED`. Décideur humain et références d'acceptation : PENDING.
+>
+> Prérequis : matrice de réconciliation V2, glossaire R0-03, crosswalk ADR R0-10.
+
+## Décision D-01 - Frontières d'agrégats
+
+**Problème :** sauvegarder les états Project et Task tout en évitant d'avoir à charger toutes les tâches d'un projet.
+
+**Option A (préférée) :** `Project` et `Task` AR séparés, reliés par `ProjectId` ; invariant inter-AR coordonné dans le use case/UoW.
+
+**Option B :** Task intégrée au Project (God Aggregate potentiel).
+
+**Compromis :** A réduit la contention et évite le chargement profond, mais oblige à gérer explicitement la cohérence de clôture, le rattachement et les courses entre écritures.
+
+**Preuves futures :** roundtrip de Task, contrôle du Project parent, fermeture refusée si critère inter-AR non satisfait, test de concurrence selon adapter.
+
+**Sources :** 05 §§8-9 ; 06 §§3,11 ; 07 §§8-9 ; 10 §§10-11. Ref de suivi : `ADR-PJ-RM-01`.
+
+## Décision D-02 - Milestone
+
+**Option A (préférée) :** Entity interne à Project, persistée par `ProjectRepository`.
+
+**Option B :** AR autonome avec `MilestoneRepository`.
+
+**Compromis :** A garde les invariants simples M0 ; B peut devenir utile si forte concurrence ou historique propre démontrés.
+
+**Preuves :** target_date exigée, `reached_at` cohérent, changements atomiques via Project. Sources : 05 §10 ; 07 §11 ; 10 §14. Réf : `ADR-PJ-RM-02`.
+
+## Décision D-03 - Dépendances et concurrence
+
+**Option A (préférée) :** snapshot de graphe par Project avec révision commune et écriture conditionnelle `replace_if_version` dans une UoW.
+
+**Option B :** écriture d'edges indépendants après vérification en mémoire.
+
+**Compromis :** A apporte un point de concurrence explicite, mais impose un port supplémentaire ; B est plus simple et insuffisant si deux transactions créent un cycle à partir d'instantanés obsolètes.
+
+**Limite annoncée :** tester l'adapter InMemory n'autorise pas à affirmer la sûreté concurrente d'un backend SQL futur.
+
+**Preuves :** insertion A->B puis B->A refusée ; concurrence simulée et absence de mutation partielle ; audit de la garantie annoncée. Sources : 07 §10, 10 §15, 11 §16. Réf : `ADR-PJ-RM-03`.
+
+## Décision D-04 - UoW et résultat de commit
+
+**Option A (préférée) :** `UnitOfWork` synchrone, commit explicite, rollback à la sortie sans commit, repositories partagés dans la même frontière transactionnelle.
+
+**Option B :** commits cachés dans chaque Repository.
+
+**Compromis :** A a une abstraction légère à tester ; B est trompeuse pour une commande modifiant Project et Task ensemble. Un timeout après envoi du COMMIT peut être `CommitOutcomeUnknown`, ni succès ni rollback certain.
+
+**Preuves :** commit unique, sans commit, exception, conflit de version, retour de copies isolées, issue inconnue. Sources : 10 §§17-19, 11 §§17-20. Réf : `ADR-PJ-RM-05`.
+
+## Décision D-05 - Autorisations minimales
+
+**Option A (préférée) :** `ActorContext` fiable fourni par l'hôte + `AuthorizationPolicy` injectée ; deny par défaut, permission et scope projet contrôlés pour Commands et Queries.
+
+**Option B :** sécurité uniquement en API web, sans contrôle dans Application.
+
+**Compromis :** A oblige à fournir une policy explicite à la composition, mais protège les usages CLI/API et les Readers. Pas de fournisseur IAM imposé.
+
+**Preuves :** cas négatifs `SEC-M0-01..06` ; aucun nombre ou ID hors scope en lecture. Source : 12 §§4, 13-17 ; 10 §19. Réf : `ADR-PJ-RM-10` (périmètre M0 uniquement).
+
+## Décision D-06 - API, langage, événements
+
+**Option A (préférée) :** noyau synchrone headless ; commandes `PutProjectOnHold` / `MarkTaskReady`, événements `ProjectPutOnHold` / `TaskMarkedReady` ; `Task` AR, `WorkItem` concept ; événements de succès seulement après commit confirmé.
+
+**Option B :** conserver plusieurs noms publics pour la même transition et émettre les événements pendant le traitement avant commit.
+
+**Compromis :** A simplifie le langage et les garanties ; il faudra documenter toute compatibilité V1 voulue. L'ordre global des événements et leur livraison réseau ne sont pas garantis en M0.
+
+**Preuves :** un événement par transition validée, aucun sur refus ou rollback ; tests d'import sans Pythos. Sources : 07 §8, 08 §§9-11, 09 §§8,10-13. Réfs : `ADR-PJ-RM-04/06`.
+
+## Décision D-07 - Baseline Python et package
+
+**Options :** `requires-python >=3.12` (proposition documents) ou politique de compatibilité différente justifiée par des consommateurs réels.
+
+**À vérifier :** environnements réels ciblés, versions des actions CI, licence, nom/package et version initiale ; la chaîne `0.1.0a1` du bootstrap est uniquement illustrative.
+
+**Preuves :** build/test/import sur matrice explicitement décidée ; aucune release avant validation des métadonnées.
+
+**Sources :** Vision 00 V2 et bootstrap 14 §8. Réf : `ADR-PJ-RM-04`.
+
+## Livrables d'une revue humaine
+
+| ID | Résolution humaine | Référence | Statut actuel |
+|---|---|---|---|
+| D-01 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-02 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-03 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-04 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-05 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-06 | Accept / Revise / Reject | PENDING | PROPOSED |
+| D-07 | Accept / Revise / Reject | PENDING | PROPOSED |
+
+Les tests proposés sont des critères de qualification futurs, pas des contrôles déjà exécutés. La décision de merge de cette PR documentaire ne vaut pas à elle seule `Q-R0 = GO`.
