@@ -39,3 +39,9 @@ Aucune ligne de ce journal n'accorde une autorisation de publication, de fusion,
 Le dossier [`R0_REVIEW_README.md`](R0_REVIEW_README.md) référence la matrice d'écarts, le glossaire, les sept décisions proposées, la matrice sécurité, les tests AC et le crosswalk ADR. Il est présenté dans une [PR documentaire en brouillon](https://github.com/tawounfouet/pyprojectkit/pull/4).
 
 **État de ces contrôles : PREPARED_FOR_REVIEW, pas PASS.** Les dossiers V2 historiques et l'approbation humaine restent des prérequis pour décider `Q-R0`.
+
+## Bloquant supplémentaire constaté par revue V1/V2
+
+Le [dossier d'audit direct V1/V2](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) identifie six collisions de codes de règles entre les versions, parfois même entre le corps de 07 V2 et son annexe historique. Un [patch correctif proposé](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) attend approbation.
+
+**D-SEM-01 : NOT_RESOLVED / BLOCKING.** Ne pas déclarer `Q-R0 = GO` tant que cette collision n'est pas arbitrée et propagée vers la baseline et la traçabilité des tests.
