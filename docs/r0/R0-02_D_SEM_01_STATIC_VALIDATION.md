@@ -41,7 +41,16 @@ Lecture du contenu réel du fichier sur la branche de revue et contrôle exact, 
 - Un fichier candidat cohérent n'est pas automatiquement une baseline approuvée. Les références transversales restent à consolider dans les documents 08 à 12.
 - Le propriétaire humain doit examiner la proposition et la décider avant toute promotion canonique.
 
-**Verdict : `D-SEM-01 = PROPOSED / STATIC_CHECK_PASS / AWAITING_HUMAN_DECISION`.** Le gate `Q-R0` demeure `NOT_ASSESSED`.
+**Verdict historique au premier contrôle : `D-SEM-01 = PROPOSED / STATIC_CHECK_PASS`. Depuis, D-SEM-01 a été `ACCEPTED` le 2026-11-03 et la copie de revue a été recontrôlée sur un nouveau blob, comme détaillé ci-dessus.** Le gate `Q-R0` demeure `NOT_ASSESSED`.
+
+## Recontrôle après approbation humaine (2026-11-03)
+
+Le propriétaire a accepté l'option A de D-SEM-01, consignée dans [l'issue #2](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491). Une nouvelle lecture du **fichier réellement publié sur la branche de revue** a été effectuée après l'ajout de cette mention.
+
+- **Blob actuel contrôlé** : `d841baca4b6b6585fbaefbb727a4028a01630458`.
+- **Assertions ciblées** : 10/10 définitions uniques et sémantiquement conformes à la décision A dans le corps actif, dont quatre IDs nouveaux.
+- **Statut** : `DOCUMENT_CHECK_PASS` pour cette cible ; `D-SEM-01 = ACCEPTED`.
+- **Limite** : ce test documentaire ne remplace ni une revue humaine des autres ADR ni un test Python/CI ; la baseline canonique de `main` n'a pas été fusionnée.
 
 ## Contrôle de références interdocuments (sources V2 fournies)
 
