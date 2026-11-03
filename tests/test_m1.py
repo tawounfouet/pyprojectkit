@@ -45,7 +45,7 @@ def env(tmp_path: Path):
     db = SqliteDatabase(path)
     grants = {
         "good": ("alice", {"a": set(ALL), "b": set(ALL)}),
-        "restricted": ("bob", {"a": {"PROJECT_VIEW", "TASK_VIEW", "RESUME", "READ_OBSERVATION",
+        "restricted": ("bob", {"a": {"PROJECT_VIEW", "PROJECT_VIEW_ALL", "TASK_VIEW", "RESUME", "READ_OBSERVATION",
                                     "READ_SNAPSHOT", "READ_HANDOFF", "READ_DECISION"}}),
         "outsider": ("mallory", {"b": set(ALL)}),
     }
@@ -410,7 +410,7 @@ def test_scope_private_classification_requires_read_private(tmp_path: Path):
     db = SqliteDatabase(tmp_path / "private.sqlite")
     perms = {"SCOPE_CREATE", "PROJECT_CREATE", "PROJECT_VIEW", "WRITE_PRIVATE", "READ_PRIVATE", "TASK_VIEW", "RESUME"}
     host = TrustedHost({"owner": ("alice", {"private": perms}),
-                        "limited": ("bob", {"private": {"PROJECT_VIEW", "RESUME", "TASK_VIEW"}})})
+                        "limited": ("bob", {"private": {"PROJECT_VIEW", "PROJECT_VIEW_ALL", "RESUME", "TASK_VIEW"}})})
     owner = host.authenticate("owner", "private")
     svc = RegistryService(db, host)
     svc.create_scope(owner, classification="PRIVATE")
@@ -491,3 +491,37 @@ print(json.dumps({"open":list(ctx.open_tasks), "decisions":list(ctx.decisions),
     assert data["snapshot"] == snapshot
     assert data["handoff"] == handoff
     assert data["next_id"] == str(task.value)
+
+
+def test_security_same_scope_does_not_imply_cross_owner_access(tmp_path: Path):
+    """Régression : PROJECT_VIEW seul ne révèle pas un projet d'un autre owner."""
+    db = SqliteDatabase(tmp_path / "owned.sqlite")
+    permissions = {"PROJECT_VIEW", "TASK_VIEW", "RESUME", "EXPORT", "EXTERNAL_READ"}
+    host = TrustedHost({
+        "alice-secret": ("alice", {"team": permissions | {"SCOPE_CREATE", "PROJECT_CREATE"}}),
+        "bob-secret": ("bob", {"team": permissions}),
+        "admin-secret": ("charlie", {"team": permissions | {"PROJECT_VIEW_ALL"}}),
+    })
+    svc = RegistryService(db, host)
+    alice = host.authenticate("alice-secret", "team")
+    bob = host.authenticate("bob-secret", "team")
+    admin = host.authenticate("admin-secret", "team")
+    svc.create_scope(alice)
+    project_id = svc.register_project(alice, "Projet privé non partagé", "PERSONAL")
+    assert svc.list_registry(bob).total == 0
+    assert svc.list_registry(bob).facets == {}
+    assert svc.list_registry(bob, offset=50).items == ()
+    for read in [
+        lambda: svc.get_registry(bob, project_id),
+        lambda: svc.list_tasks(bob, project_id),
+        lambda: svc.list_external(bob, project_id),
+        lambda: svc.resume(bob, project_id),
+        lambda: svc.export_project(bob, project_id),
+    ]:
+        with pytest.raises(NotFound, match="Ressource indisponible"):
+            read()
+    assert svc.get_registry(admin, project_id).owner_id == "alice"
+    assert svc.list_registry(admin).total == 1
+    # Une ressource peut aussi être partagée individuellement par permission ciblée.
+    host2 = TrustedHost({"reader": ("bob", {"team": permissions | {f"PROJECT_VIEW:{project_id}"}})})
+    assert RegistryService(db, host2).get_registry(host2.authenticate("reader", "team"), project_id).name == "Projet privé non partagé"
