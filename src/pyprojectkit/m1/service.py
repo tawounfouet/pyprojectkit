@@ -54,10 +54,14 @@ class RegistryService:
         obj = uow.projects.get(ProjectId(UUID(_uuid(project_id))))
         if obj is None or obj.scope != actor.scope_id:
             raise NotFound("Ressource indisponible")
-        reg = uow._db().execute("SELECT 1 FROM project_registry WHERE project_id=? AND scope_id=?",
+        reg = uow._db().execute("""SELECT s.classification FROM project_registry r
+                                         JOIN context_scopes s ON s.id=r.scope_id
+                                         WHERE r.project_id=? AND r.scope_id=?""",
                                 (project_id, actor.scope_id)).fetchone()
         if reg is None:
             raise NotFound("Ressource indisponible")
+        if reg["classification"] == "PRIVATE":
+            self.authority.require(actor, "READ_PRIVATE")
         return obj
 
     def _entry(self, row: Any) -> RegistryEntry:
@@ -66,6 +70,12 @@ class RegistryService:
 
     def _entries(self, uow: SqliteUnitOfWork, actor: VerifiedActor) -> list[RegistryEntry]:
         self.authority.require(actor, "PROJECT_VIEW")
+        scope_row = uow._db().execute("SELECT classification FROM context_scopes WHERE id=?",
+                                      (actor.scope_id,)).fetchone()
+        if scope_row is None:
+            raise NotFound("Ressource indisponible")
+        if scope_row["classification"] == "PRIVATE":
+            self.authority.require(actor, "READ_PRIVATE")
         rows = uow._db().execute("""
             SELECT r.project_id,p.name,p.owner_id,r.scope_id,p.status,r.family,r.priority,r.due_date,r.registered_at
             FROM project_registry AS r JOIN projects AS p ON r.project_id=p.id
@@ -78,6 +88,8 @@ class RegistryService:
         self.authority.require(actor, "SCOPE_CREATE")
         if classification not in ("INTERNAL", "PRIVATE"):
             raise InvalidValue("Classification invalide")
+        if classification == "PRIVATE":
+            self.authority.require(actor, "WRITE_PRIVATE")
         with SqliteUnitOfWork(self.db) as uow:
             uow.add_scope(actor.scope_id, actor.actor_id, classification, _nonempty(policy_ref, "policy_ref"), self._now())
             uow.commit()
@@ -95,6 +107,12 @@ class RegistryService:
         if due_date is not None and (not isinstance(due_date, date) or isinstance(due_date, datetime)):
             raise InvalidValue("Échéance civile invalide")
         with SqliteUnitOfWork(self.db) as uow:
+            scope_row = uow._db().execute("SELECT classification FROM context_scopes WHERE id=?",
+                                          (actor.scope_id,)).fetchone()
+            if scope_row is None:
+                raise NotFound("Ressource indisponible")
+            if scope_row["classification"] == "PRIVATE":
+                self.authority.require(actor, "WRITE_PRIVATE")
             sid = ProjectId(uuid4())
             obj = Project(sid, name, actor.actor_id, actor.scope_id)
             uow.projects.add(obj)
