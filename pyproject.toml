@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyprojectkit"
-version = "0.1.0a1"
-description = "Noyau Python headless pour projets, tâches et dépendances"
+version = "0.2.0a1"
+description = "PyProjectKit M0/M1 : projets et registre durable local"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{name = "PyProjectKit contributors"}]
@@ -17,6 +17,9 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[project.scripts]
+pyprojectkit = "pyprojectkit.m1.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
