@@ -48,11 +48,20 @@ class RegistryService:
     def _now(self) -> str:
         return _aware(self.clock.now())
 
+    def _can_view_project(self, actor: VerifiedActor, project: Project) -> bool:
+        """Visibilité par propriétaire ou partage explicite accordé par l'hôte.
+
+        PROJECT_VIEW seul autorise la requête, pas tous les projets du scope.
+        """
+        return (project.owner_id == actor.actor_id
+                or self.authority.permits(actor, "PROJECT_VIEW_ALL")
+                or self.authority.permits(actor, f"PROJECT_VIEW:{project.id.value}"))
+
     def _project(self, uow: SqliteUnitOfWork, actor: VerifiedActor,
                  project_id: str, permission: str = "PROJECT_VIEW") -> Project:
         self.authority.require(actor, permission)
         obj = uow.projects.get(ProjectId(UUID(_uuid(project_id))))
-        if obj is None or obj.scope != actor.scope_id:
+        if obj is None or obj.scope != actor.scope_id or not self._can_view_project(actor, obj):
             raise NotFound("Ressource indisponible")
         reg = uow._db().execute("""SELECT s.classification FROM project_registry r
                                          JOIN context_scopes s ON s.id=r.scope_id
@@ -81,7 +90,13 @@ class RegistryService:
             FROM project_registry AS r JOIN projects AS p ON r.project_id=p.id
             WHERE r.scope_id=? AND p.scope=? ORDER BY r.priority DESC, r.project_id
         """, (actor.scope_id, actor.scope_id))
-        return [self._entry(row) for row in rows]
+        # Le scope seul ne donne pas accès aux projets d'autres propriétaires.
+        # Ce filtrage intervient avant count, facettes, pagination et export.
+        return [self._entry(row) for row in rows if (
+            row["owner_id"] == actor.actor_id
+            or self.authority.permits(actor, "PROJECT_VIEW_ALL")
+            or self.authority.permits(actor, f"PROJECT_VIEW:{row['project_id']}")
+        )]
 
     def create_scope(self, actor: VerifiedActor, *, policy_ref: str = "local-pilot",
                      classification: str = "INTERNAL") -> None:
