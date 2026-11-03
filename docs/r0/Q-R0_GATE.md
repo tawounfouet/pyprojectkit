@@ -40,9 +40,9 @@ Le dossier [`R0_REVIEW_README.md`](R0_REVIEW_README.md) référence la matrice d
 
 **État de ces contrôles : PREPARED_FOR_REVIEW, pas PASS.** Les dossiers V2 historiques et l'approbation humaine restent des prérequis pour décider `Q-R0`.
 
-## Bloquant supplémentaire constaté par revue V1/V2
+## Historique du blocage sémantique D-SEM-01 (résolu sur le plan de la décision)
 
-Le [dossier d'audit direct V1/V2](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) identifie six collisions de codes de règles entre les versions, parfois même entre le corps de 07 V2 et son annexe historique. Un [patch correctif proposé](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) attend approbation.
+Le [dossier d'audit direct V1/V2](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) identifie six collisions de codes de règles entre les versions, parfois même entre le corps de 07 V2 et son annexe historique. Le [patch option A](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) a été approuvé le 2026-11-03, tout en restant sur la branche de revue tant que la PR #4 n'est pas fusionnée.
 
 **D-SEM-01 : décision ACCEPTED le 2026-11-03.** La correction a été arbitrée par le propriétaire (option A), mais son intégration à la baseline et la traçabilité globale restent à vérifier avant `Q-R0`.
 
@@ -57,3 +57,9 @@ La [copie de revue de 07 V2](../specifications/review/07_PYPROJECTKIT_DOMAIN_INV
 L'[enregistrement de l'approbation humaine](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) permet de lever **le seul blocage de choix sémantique D-SEM-01**. La [fiche de décision](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) est désormais `ACCEPTED` pour son périmètre documentaire.
 
 **Non acquis** : revue et éventuelle fusion de la PR #4, baseline V2 alignée et adoptée, les sept choix de conception M0, contrôles d'autorisation, paquet Python, CI et décision formelle `Q-R0`. **Verdict global maintenu : NOT_ASSESSED.**
+
+## Revue des sept ADR structurants et entrée BOOT-01
+
+Les fiches [D-01..D-07](R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md) sont prêtes pour la [revue humaine #5](https://github.com/tawounfouet/pyprojectkit/issues/5), mais demeurent toutes `PROPOSED`. La [première tranche M0](R0-09_FIRST_VERTICAL_SLICE_PROPOSAL.md) est également une **proposition**, pas un mandat d'implémentation. L'[overlay](R0-08_SOFTWARE_DESIGN_OVERLAY_REVIEW.md) est revu pour son périmètre M0, mais non adopté formellement.
+
+Pour passer `Q-R0` : décider D-01..D-07, aligner/valider la baseline, établir la politique d'autorisation et la cible de repo, documenter les preuves exactes, puis enregistrer un verdict humain. **État global : NOT_ASSESSED.**
