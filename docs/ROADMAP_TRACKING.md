@@ -46,3 +46,7 @@ Une [PR documentaire #4 en brouillon](https://github.com/tawounfouet/pyprojectki
 ## Prochaine action
 
 Poursuivre `R0-02` : comparer systématiquement les textes V2, qualifier les divergences, identifier les arbitrages nécessaires et préparer une revue des décisions bloquantes. Vérifier en parallèle les protections de `main` et les éventuelles sources locales non publiées.
+
+## Mise à jour de l'audit V1/V2
+
+Les 12 documents originaux V1 sont retrouvés et comparés avec leurs V2. Un [rapport de compatibilité](r0/2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) recense six collisions de sens de règles et la préservation de garanties AC héritées. Le [patch de remédiation candidat](r0/R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) attend décision humaine. La PR #4 reste en brouillon et `Q-R0 = NOT_ASSESSED`.
