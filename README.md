@@ -1,6 +1,6 @@
 # PyProjectKit - prototype M0 + M1 (registre local)
 
-**Statut** : implémentation de revue sur `feat/m1-registry-continuity`, empilée sur `feat/m0-bootstrap`. Ni Q-R0, ni Q-M0, ni Q-M1 n'ont été approuvés. **Pas de publication PyPI ni de traitement de données sensibles réelles.** Licence en attente.
+**Statut** : prototype alpha M0 + M1 qualifié pour un **pilote local synthétique** avec [accord conditionnel d'intégration](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md). Cette décision ne vaut pas autorisation de publication, d'usage en production ni de traitement de données réelles sensibles. **Licence en attente, aucune publication PyPI.**
 
 ## Portée du prototype
 
@@ -62,3 +62,9 @@ src/pyprojectkit/m1/cli.py                          # démonstration synthétiqu
 **Limites** : SQLite local non chiffré et non multi-serveur, UoW avec `BEGIN IMMEDIATE` sérialisant les writers, pas d'outbox distribuée, pas de connecteur IAM, OAuth, Pythos, GitHub/Drive sync, ni protection contre un programme Python hostile déjà dans le même processus. Une évaluation `PASS` est un **record applicatif déclaré par un évaluateur autorisé**, pas une vérification CI indépendante : les fixtures n'affirment pas une qualification de projet réel.
 
 Les preuves GitHub Actions, la matrice AC-013..AC-026 et les limites seront conservées dans `docs/qualification/M1_REPORT.md` en liaison avec l'issue GitHub M1 #8.
+
+## Qualification complémentaire de sécurité et d'intégration
+
+Le contrôleur M1 filtre maintenant les projets d'un même scope par **propriétaire** ou par partage explicite provenant de l'hôte vérifié : `PROJECT_VIEW_ALL` ou `PROJECT_VIEW:<uuid>`. Un droit `PROJECT_VIEW` seul ne donne plus accès aux projets d'autres propriétaires. Les Queries, comptes, facettes, exports et reprises respectent cette restriction. Cette propriété s'applique au pilote local avec processus hôte de confiance, pas à un service exposé au code hostile.
+
+**CI** : 41 tests pytest par version sur Python 3.12/3.13, `mypy --strict`, wheel installée hors ligne dans un environnement virtuel isolé. Dossier : [Gate alpha](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) et [rapport M1](docs/qualification/M1_REPORT.md).
