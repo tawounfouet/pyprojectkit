@@ -7,3 +7,14 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
+
+# Données locales et clés (jamais dans Git)
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+.env
+*.pem
