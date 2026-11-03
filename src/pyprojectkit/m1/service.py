@@ -165,7 +165,7 @@ class RegistryService:
     def _visible_records(self, uow: SqliteUnitOfWork, actor: VerifiedActor, project_id: str,
                          kind: str | None = None) -> list[HistoryRecord]:
         result = []
-        for record in uow.records.list(project_id, actor.scope_id, kind):
+        for record in uow.records.list_records(project_id, actor.scope_id, kind):
             try:
                 self.authority.require(actor, "READ_" + record.kind.upper(), classification=record.classification)
             except AccessDenied:
@@ -395,7 +395,9 @@ class RegistryService:
             obs = last("observation")
             snap = last("snapshot")
             handoff = last("handoff")
-            incomplete = tuple(["snapshot"] if snap is None else snap.get("incomplete_sections", []))
+            raw_incomplete = ["snapshot"] if snap is None else snap.get("incomplete_sections", [])
+            incomplete: tuple[str, ...] = tuple(raw_incomplete) if isinstance(raw_incomplete, list) and all(
+                isinstance(item, str) for item in raw_incomplete) else ("invalid_snapshot",)
             return ResumeContext(entry, tuple(tasks), obs, snap, handoff, decisions, open_cases,
                                  self._next_action(tasks), str(obs["observed_at"]) if obs else "UNKNOWN", incomplete)
 
