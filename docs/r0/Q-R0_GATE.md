@@ -33,3 +33,9 @@
 | 2026-11-03 | NOT_ASSESSED | PENDING | Mise en place de la gouvernance seulement | R0-02 à R0-10 ouverts |
 
 Aucune ligne de ce journal n'accorde une autorisation de publication, de fusion, de release ou de création du package M0.
+
+## Dossier de revue disponible sur branche (non fusionné)
+
+Le dossier [`R0_REVIEW_README.md`](R0_REVIEW_README.md) référence la matrice d'écarts, le glossaire, les sept décisions proposées, la matrice sécurité, les tests AC et le crosswalk ADR. Il est présenté dans une [PR documentaire en brouillon](https://github.com/tawounfouet/pyprojectkit/pull/4).
+
+**État de ces contrôles : PREPARED_FOR_REVIEW, pas PASS.** Les dossiers V2 historiques et l'approbation humaine restent des prérequis pour décider `Q-R0`.
