@@ -103,3 +103,9 @@ Les tests proposés sont des critères de qualification futurs, pas des contrôl
 La [revue directe des 12 sources V1](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) a établi des collisions d'identifiants dans 07 V2. Elles doivent être corrigées dans la future baseline avant de valider les contrats M0 et d'écrire des tests par identifiant. La [proposition de remédiation](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) conserve les sens V1 et réserve des IDs V2 nouveaux.
 
 **Statut D-SEM-01 : ACCEPTED - option A ([trace humaine](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)).** Le blocage de décision sémantique est levé. Il reste à intégrer la correction dans la baseline et à valider les options techniques D-01..D-07, qui restent `PROPOSED`.
+
+## Décomposition en fiches de décision individuelles, version de revue
+
+Les sept arbitrages de cette note sont maintenant détaillés dans les fiches [D-01](../adr/proposals/D-01_PROJECT_TASK_AGGREGATE_BOUNDARIES.md), [D-02](../adr/proposals/D-02_MILESTONE_OWNERSHIP_AND_DATES.md), [D-03](../adr/proposals/D-03_DEPENDENCY_GRAPH_CONCURRENCY.md), [D-04](../adr/proposals/D-04_UNIT_OF_WORK_AND_FAILURE_SEMANTICS.md), [D-05](../adr/proposals/D-05_APPLICATION_AUTHORIZATION_M0.md), [D-06](../adr/proposals/D-06_PUBLIC_COMMANDS_AND_DOMAIN_EVENTS.md) et [D-07](../adr/proposals/D-07_PYTHON_PACKAGING_AND_COMPATIBILITY.md).
+
+Le [tableau de revue](R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md) et [l'issue GitHub #5](https://github.com/tawounfouet/pyprojectkit/issues/5) concentrent les approbations et les réserves. Aucun D-01..D-07 n'a encore une décision humaine `ACCEPTED`.
