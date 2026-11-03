@@ -47,3 +47,12 @@ L'audit direct des V1 confirme que six identifiants du document 07 V2 ont un sen
 - [Fiche de décision formelle D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md)
 
 La [décision D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) a été **ACCEPTED le 2026-11-03** pour l'option A ([trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)). La copie de 07 V2 demeure sur la branche de revue, sans fusion ni qualification technique ; le gate `Q-R0` reste `NOT_ASSESSED`.
+
+## Dossiers d'architecture préparés (2026-11-03)
+
+- [Tableau des sept décisions M0](R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md) et [issue de revue humaine #5](https://github.com/tawounfouet/pyprojectkit/issues/5).
+- [D-01 - Agrégats](../adr/proposals/D-01_PROJECT_TASK_AGGREGATE_BOUNDARIES.md), [D-02 - Jalons](../adr/proposals/D-02_MILESTONE_OWNERSHIP_AND_DATES.md), [D-03 - Graphe](../adr/proposals/D-03_DEPENDENCY_GRAPH_CONCURRENCY.md), [D-04 - UoW](../adr/proposals/D-04_UNIT_OF_WORK_AND_FAILURE_SEMANTICS.md).
+- [D-05 - Sécurité](../adr/proposals/D-05_APPLICATION_AUTHORIZATION_M0.md), [D-06 - API et événements](../adr/proposals/D-06_PUBLIC_COMMANDS_AND_DOMAIN_EVENTS.md), [D-07 - Packaging](../adr/proposals/D-07_PYTHON_PACKAGING_AND_COMPATIBILITY.md).
+- [Revue de l'overlay d'apprentissage](R0-08_SOFTWARE_DESIGN_OVERLAY_REVIEW.md) et [première tranche verticale candidate](R0-09_FIRST_VERTICAL_SLICE_PROPOSAL.md).
+
+Les sept décisions demeurent `PROPOSED`. La revue de l'overlay et le vertical slice sont préparés, pas approuvés ni implémentés.
