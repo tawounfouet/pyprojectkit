@@ -49,8 +49,13 @@ Poursuivre `R0-02` : comparer systématiquement les textes V2, qualifier les div
 
 ## Mise à jour de l'audit V1/V2
 
-Les 12 documents originaux V1 sont retrouvés et comparés avec leurs V2. Un [rapport de compatibilité](r0/2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) recense six collisions de sens de règles et la préservation de garanties AC héritées. Le [patch de remédiation candidat](r0/R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) attend décision humaine. La PR #4 reste en brouillon et `Q-R0 = NOT_ASSESSED`.
+Les 12 documents originaux V1 sont retrouvés et comparés avec leurs V2. Un [rapport de compatibilité](r0/2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) recense six collisions de sens de règles et la préservation de garanties AC héritées. Le [correctif](r0/R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) correspond à l'option A, **approuvée le 2026-11-03** ([trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)). La PR #4 reste en brouillon et `Q-R0 = NOT_ASSESSED`.
 
 ## Décision documentaire D-SEM-01 : état actualisé
 
-La [spécification 07 V2 candidate corrigée](specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) et la [fiche de décision](adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) sont désormais incluses dans la PR #4. La validation documentaire ciblée est [documentée](r0/R0-02_D_SEM_01_STATIC_VALIDATION.md), mais l'approbation, la propagation aux autres V2 et l'autorisation de BOOT-01 restent en attente.
+La [spécification 07 V2 candidate corrigée](specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) et la [fiche de décision](adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) sont désormais incluses dans la PR #4. La validation documentaire ciblée est [documentée](r0/R0-02_D_SEM_01_STATIC_VALIDATION.md), mais la consolidation de baseline, les arbitrages M0 restants et l'autorisation de BOOT-01 restent en attente.
+
+
+## Décision D-SEM-01 actée
+
+**ACCEPTED (option A, 2026-11-03).** Validation humaine enregistrée [ici](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491) et dans la [fiche de décision](adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md). Le périmètre approuvé est limité à la conservation du sens des six IDs V1 et à leur séparation des nouveaux codes V2. Les décisions D-01..D-07 et le gate `Q-R0` demeurent ouverts.
