@@ -69,3 +69,7 @@ Les sept arbitrages D-01..D-07 sont documentés avec alternatives et tests atten
 - `R0-08` = REVIEW_DONE_FOR_M0, adoption en attente.
 - `R0-09` = SLICE_PROPOSED, pas de mandat `BOOT-01`.
 - `Q-R0` = NOT_ASSESSED.
+
+## Qualification technique alpha et passage proposé sur main
+
+La [décision de gate pour intégration locale](gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) établit un `CONDITIONAL GO` pour le merge du pilote synthétique, avec [arbitrages M0 adoptés pour alpha seulement](adr/2026-11-03_M0_ALPHA_PILOT_DECISION_REGISTER.md). Une CI Python 3.12/3.13 sur PR #10 au SHA `6e52b9bed819dde7465933c3dfd782559d2c9f60` confirme 41 tests par version, mypy strict et installation wheel isolée. Les contrôles post-merge devront être enregistrés séparément. Aucun `GO` de publication, de production, de données sensibles ou de licence n'en découle.
