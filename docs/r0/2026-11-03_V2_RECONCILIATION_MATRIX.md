@@ -26,7 +26,7 @@
 | GAP-04 | 08 §7, 10 §17, 11 §17 : UoW explicite, sortie sans commit annule ; issue de commit inconnue distincte du rollback | Un même contrat UoW local et ses échecs, avec InMemory isolé | COHERENT_PROPOSED + DECISION_REQUIRED | Choisir signatures minimales et tests de contrat ; **PENDING** |
 | GAP-05 | 08 §11.4 : `PutProjectOnHold` ou `PauseProject` ; 07 §8.2 : `PauseProject`; 09 §10 : `ProjectPutOnHold` héritage V1 ; 08 §11.7 évoque `TaskReadied`, 09 §11 retient `TaskMarkedReady` | Un nom canonique par Command/Event ; aliases historiques seulement s'ils sont requis | NOMENCLATURE_GAP | Candidats : `PutProjectOnHold` / `ProjectPutOnHold`, `MarkTaskReady` / `TaskMarkedReady`. **PENDING** |
 | GAP-06 | 12 §4, §§13-17 : ActorContext fiable, permissions projet, guard Command/Query M0. 07/08 : scopes et décisions avant mutation ; M1 élargit les vues | Minimum M0 fail-closed testable, sans IAM intégré ni Pythos obligatoire | DECISION_REQUIRED | Matrice M0 par opération et politique de ressource invisible ; **PENDING** |
-| GAP-07 | 05 §8-9 et 07 §§8-9 : ProjectStatus et TaskStatus distincts ; 08 §2 : `DONE != VERIFIED`; 09 §3 : audit/event/report distincts | Glossaire, noms de transitions, état métier ≠ état de qualification | COHERENT_PROPOSED + NOMENCLATURE_GAP | Voir `R0-03_DOMAIN_GLOSSARY.md` ; **REVIEW** |
+| GAP-07 | Les états Project/Task/qualification restent bien séparés dans V2 ; **l'audit direct V1/V2 révèle en revanche six réutilisations d'ID de règles avec un sens différent dans 07 V2** | Glossaire + une signification canonique par identifiant de règle | **BLOCKING_SEMANTIC_COLLISION** | Voir audit direct V1/V2, patch proposé et décision `D-SEM-01` ; **PENDING** |
 | GAP-08 | Vision 00 §métadonnées : Python 3.12+ cible historique ; 14 §8 : `requires-python >=3.12` et `0.1.0a1` illustratifs ; licence indécise | Baseline Python/packaging minimale décidée avant BOOT-01 | DECISION_REQUIRED | `>=3.12` candidat à confirmer, pas de version ou licence publiées implicitement ; **PENDING** |
 | GAP-09 | Familles d'identifiants ADR concurrentes : `ADR-06-*`, `ADR-07-*`, `ADR-APP-*`, `ADR-PJ-10-*`, `ADR-ERR-V2-*`, `SEC-ADR-V2-*`, `ADR-PJ-RM-*` | Index canonique par **décision**, avec alias vers références historiques, sans dupliquer l'arbitrage | DECISION_REQUIRED | Voir `R0-10_ADR_CROSSWALK.md` ; **REVIEW** |
 | GAP-10 | Requirements 00 §34 : `AC-001..012` M0 ; 13 §8 et §15 : gate complet ; 14 §1 : premier scénario, non qualification totale | Distinguer vertical slice de démonstration et gate final `Q-M0` | COHERENT_PROPOSED | `AC-001..012` restent nécessaires à Q-M0 ; mapping en `R0-07_M0_ACCEPTANCE_TRACEABILITY.md` |
@@ -42,6 +42,14 @@
 L'infographie de bootstrap fournie indique **« Un Projet possède au moins une Task »** et figure une cardinalité `1..*`. En revanche, **06 V2 §11** prescrit explicitement `Project 1 -> 0..N Task`, et **08 V2 §11.1** permet `CreateProject` sans créer de Task simultanément. La cardinalité normative candidate est donc **0..N Task par Project**, chaque Task ayant exactement un Project parent. La règle `1..*` serait une nouvelle contrainte métier qui empêcherait un projet `DRAFT` sans tâche et ne doit pas être copiée du visuel dans le code.
 
 **Classification : CONTRADICTION_VISUEL_SPEC.** Proposition : corriger le prochain visuel à `0..*` et conserver le scénario `CreateProject` indépendant. Décision humaine toujours `PENDING` si la contrainte produit souhaitée diffère.
+
+## Complément de revue V1 originale : D-SEM-01
+
+La [confrontation directe des 12 sources V1](2026-11-03_V1_V2_DIRECT_SOURCE_AUDIT.md) a confirmé des **collisions de sens de six codes** dans 07 V2 (`BR-ASSIGN-001..003`, `BR-DELIV-001/002`, `INV-DATE-002`). L'annexe A de 07 V2 conserve les anciennes significations mais le corps définit des règles différentes avec les mêmes IDs. La [remédiation candidate](R0-02_V2_RULE_ID_REMEDIATION_PROPOSAL.md) préserve les codes V1 et attribue des identifiants neufs aux exigences V2 nouvelles.
+
+La V1 Requirements §34 impose aussi l'installation du package (`AC-001`), l'interdiction des drivers DB dans le core (`AC-010`) et le passage des tests en CI (`AC-012`). Ces garanties doivent rester vérifiées, même si les formulations V2 ont changé. Voir la matrice R0-07.
+
+**Classification : BLOCKING pour la baseline des identifiants du document 07, DECISION_REQUIRED pour les renforcements de contrats AC.** Aucun correctif n'est encore approuvé.
 
 ## Décisions bloquantes proposées avant BOOT-01
 
