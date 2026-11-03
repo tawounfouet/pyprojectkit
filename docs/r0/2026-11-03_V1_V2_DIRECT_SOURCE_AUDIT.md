@@ -98,3 +98,7 @@ Les capacités V1 ne doivent pas être retirées par une modification de phrase 
 - [ ] Vérifier que le corpus accepté est versionné dans une baseline Git.
 
 **Verdict : REVIEW REQUIRED, pas GO.** La recherche et la comparaison des sources ont progressé ; elles ne se substituent pas à l'approbation ou aux tests.
+
+## Actualisation du 3 novembre 2026 : décision obtenue
+
+Les recommandations de préservation des codes historiques ont été approuvées par le propriétaire sous [D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) ([trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)). Les constats et réserves initiaux de ce rapport restent conservés comme **historique de l'audit**, tandis que la copie corrigée de 07 V2 se trouve dans `docs/specifications/review/` sur la PR #4. L'acceptation du choix de compatibilité ne termine ni l'audit de toutes les règles ni le gate `Q-R0`.
