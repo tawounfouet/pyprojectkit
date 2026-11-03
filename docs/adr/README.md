@@ -58,3 +58,17 @@ Le [crosswalk des décisions V2](../r0/R0-10_ADR_CROSSWALK.md) rapproche les ide
 La [fiche D-SEM-01](D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) concerne la compatibilité de six identifiants de règles V1/V2. Une [copie de revue 07 V2 corrigée](../specifications/review/07_PYPROJECTKIT_DOMAIN_INVARIANTS_AND_BUSINESS_RULES_V2.md) et sa [vérification statique](../r0/R0-02_D_SEM_01_STATIC_VALIDATION.md) sont disponibles sur la branche de PR.
 
 **D-SEM-01 = ACCEPTED (option A, 2026-11-03, [trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)).** Les ADR architecturaux `ADR-PJ-RM-01..12` restent `PROPOSED`, et le gate `Q-R0` reste `NOT_ASSESSED`.
+
+## Revue des sept décisions architecturales M0 (en attente de validation)
+
+Les [sept propositions D-01..D-07](../r0/R0-04_ARCHITECTURE_DECISION_REVIEW_BOARD.md) sont préparées sous [`docs/adr/proposals/`](proposals/), avec alternatives, compromis et tests de qualification envisagés. La [revue humaine est suivie dans l'issue #5](https://github.com/tawounfouet/pyprojectkit/issues/5), via la PR #4 en brouillon.
+
+- **D-01** : `Project` / `Task` comme AR distincts.
+- **D-02** : `Milestone` interne à Project.
+- **D-03** : `DependencyGraph` versionné et contrôle de concurrence.
+- **D-04** : UnitOfWork, rollback et issue inconnue de commit.
+- **D-05** : AuthorizationPolicy M0, fail-closed.
+- **D-06** : Commands/Domain Events et dispatch postcommit.
+- **D-07** : Python/package, licence, versions et structure physique.
+
+**Statut commun : PROPOSED / NOT APPROVED.** L'acceptation de D-SEM-01 n'est pas une approbation globale de ces décisions.
