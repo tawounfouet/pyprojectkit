@@ -70,6 +70,18 @@ class TrustedHost:
         elif classification != "INTERNAL":
             raise AccessDenied("Accès indisponible")
 
+    def permits(self, actor: VerifiedActor, permission: str) -> bool:
+        """Vérifie un privilège explicite sans divulguer l'existence d'une ressource.
+
+        L'appelant doit d'abord vérifier le droit de lire le scope. Une permission
+        PROJECT_VIEW ne donne pas automatiquement accès aux projets d'autrui.
+        """
+        try:
+            self.require(actor, permission)
+        except AccessDenied:
+            return False
+        return True
+
     def _require_private_write(self, actor: VerifiedActor) -> None:
         allowed = "WRITE_PRIVATE" in self._issued[(actor.actor_id, actor.scope_id, actor._nonce)]
         if not allowed:
