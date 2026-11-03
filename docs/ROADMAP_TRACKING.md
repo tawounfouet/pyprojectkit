@@ -39,6 +39,10 @@ Le découpage en semaines illustré dans les visuels S1-S16+ ne constitue pas un
 - Aucun statut `IMPLEMENTED`, `VERIFIED` ou `QUALIFIED` sans résultat à la référence exacte.
 - Aucun ADR `ACCEPTED` sans approbation humaine ; aucune fusion ou publication implicite.
 
+## Revue documentaire en cours (2026-11-03)
+
+Une [PR documentaire #4 en brouillon](https://github.com/tawounfouet/pyprojectkit/pull/4) contient le dossier R0 de réconciliation, glossaire, décisions candidates, sécurité et traçabilité AC. La PR n'est ni une approbation d'ADR, ni une qualification de M0, ni un lancement de BOOT-01.
+
 ## Prochaine action
 
 Poursuivre `R0-02` : comparer systématiquement les textes V2, qualifier les divergences, identifier les arbitrages nécessaires et préparer une revue des décisions bloquantes. Vérifier en parallèle les protections de `main` et les éventuelles sources locales non publiées.
