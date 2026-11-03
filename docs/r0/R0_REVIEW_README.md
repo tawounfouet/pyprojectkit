@@ -46,4 +46,4 @@ L'audit direct des V1 confirme que six identifiants du document 07 V2 ont un sen
 - [Compte rendu de vérification statique sur le blob](R0-02_D_SEM_01_STATIC_VALIDATION.md)
 - [Fiche de décision formelle D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md)
 
-La copie de 07 V2 reste en `REVIEW`, n'est pas une baseline normative approuvée et n'est pas sur `main` tant que la PR n'est pas fusionnée. Le blocage sémantique est **techniquement préparé pour décision**, pas clos.
+La [décision D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) a été **ACCEPTED le 2026-11-03** pour l'option A ([trace](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)). La copie de 07 V2 demeure sur la branche de revue, sans fusion ni qualification technique ; le gate `Q-R0` reste `NOT_ASSESSED`.
