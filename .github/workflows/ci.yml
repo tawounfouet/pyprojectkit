@@ -27,3 +27,7 @@ jobs:
           python -m pytest -q
           python examples/first_project.py
           python -m pip wheel --no-deps -w dist .
+      - name: Strict static typing
+        run: |
+          python -m pip install "mypy>=1.12,<2"
+          python -m mypy --strict --python-version 3.12 src/pyprojectkit examples/first_project.py
