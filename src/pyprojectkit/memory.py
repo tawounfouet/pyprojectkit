@@ -4,7 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from threading import RLock
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 from .domain import Conflict, Dependency, DomainEvent, Project, ProjectId, Task, TaskId, assert_acyclic
 
@@ -23,7 +23,7 @@ class InMemoryDatabase:
 
 class Repository(Generic[I, T]):
     def __init__(self, original: dict[I, T]):
-        self.original = deepcopy(original)
+        self.original: dict[I, T] = deepcopy(original)
         self.staged: dict[I, T] = {}
         self.read_versions: dict[I, int | None] = {}
 
@@ -43,15 +43,17 @@ class Repository(Generic[I, T]):
         return result
 
     def add(self, obj: T) -> None:
-        if obj.id in self.staged or obj.id in self.original:
+        identifier = cast(I, obj.id)
+        if identifier in self.staged or identifier in self.original:
             raise Conflict("Identité déjà utilisée")
-        self.staged[obj.id] = deepcopy(obj)  # type: ignore[index]
+        self.staged[identifier] = deepcopy(obj)
 
     def save(self, obj: T, *, expected_version: int) -> None:
-        known = self.staged.get(obj.id, self.original.get(obj.id))  # type: ignore[arg-type]
+        identifier = cast(I, obj.id)
+        known = self.staged.get(identifier, self.original.get(identifier))
         if known is None or known.version != expected_version:
             raise Conflict("Version obsolète ou entité absente")
-        self.staged[obj.id] = deepcopy(obj)  # type: ignore[index]
+        self.staged[identifier] = deepcopy(obj)
 
 
 class DependencyGraphPort:
@@ -72,6 +74,16 @@ class DependencyGraphPort:
         self.staged[project_id] = (expected_version + 1, deepcopy(edges))
 
 
+def _verify_repo(repo: Repository[I, T], global_store: dict[I, T]) -> None:
+    for key in repo.staged.keys() | repo.read_versions.keys():
+        before = repo.original.get(key)
+        current = global_store.get(key)
+        if before is None and current is not None:
+            raise Conflict("Création concurrente")
+        if before is not None and (current is None or current.version != before.version):
+            raise Conflict("Modification concurrente")
+
+
 class InMemoryUnitOfWork:
     """Commit atomique par verrou et validation de versions des writes.
 
@@ -82,6 +94,9 @@ class InMemoryUnitOfWork:
         self._active = False
         self._committed = False
         self._events: list[DomainEvent] = []
+        self.projects: Repository[ProjectId, Project]
+        self.tasks: Repository[TaskId, Task]
+        self.dependencies: DependencyGraphPort
 
     def __enter__(self) -> "InMemoryUnitOfWork":
         if self._active:
@@ -102,17 +117,8 @@ class InMemoryUnitOfWork:
         if not self._active or self._committed:
             raise RuntimeError("Commit impossible")
         with self.db._lock:
-            for repo, global_store in (
-                (self.projects, self.db.projects),
-                (self.tasks, self.db.tasks),
-            ):
-                for key in repo.staged.keys() | repo.read_versions.keys():
-                    before = repo.original.get(key)
-                    current = global_store.get(key)
-                    if before is None and current is not None:
-                        raise Conflict("Création concurrente")
-                    if before is not None and (current is None or current.version != before.version):
-                        raise Conflict("Modification concurrente")
+            _verify_repo(self.projects, self.db.projects)
+            _verify_repo(self.tasks, self.db.tasks)
             for key in self.dependencies.staged:
                 before_version = self.dependencies.original.get(key, (0, set()))[0]
                 current_version = self.db.graphs.get(key, (0, set()))[0]
@@ -130,10 +136,8 @@ class InMemoryUnitOfWork:
             prepared_graphs = deepcopy(self.dependencies.staged)
             prepared_events = deepcopy(self._events)
             # Applying prepared state under one lock is atomic for InMemory observers.
-            for prepared, global_store in (
-                (prepared_projects, self.db.projects), (prepared_tasks, self.db.tasks),
-            ):
-                global_store.update(prepared)
+            self.db.projects.update(prepared_projects)
+            self.db.tasks.update(prepared_tasks)
             self.db.graphs.update(prepared_graphs)
             self.db.events.extend(prepared_events)
         self._committed = True
