@@ -404,3 +404,64 @@ def test_scope_classification_does_not_override_verified_host(env):
         svc.register_project(VerifiedActor(a.actor_id, "b", a._issuer, a._nonce), "forged", "PACKAGE")
     with db.connection() as c:
         assert c.execute("SELECT COUNT(*) FROM projects").fetchone()[0] == 0
+
+
+def test_scope_private_classification_requires_read_private(tmp_path: Path):
+    db = SqliteDatabase(tmp_path / "private.sqlite")
+    perms = {"SCOPE_CREATE", "PROJECT_CREATE", "PROJECT_VIEW", "WRITE_PRIVATE", "READ_PRIVATE", "TASK_VIEW", "RESUME"}
+    host = TrustedHost({"owner": ("alice", {"private": perms}),
+                        "limited": ("bob", {"private": {"PROJECT_VIEW", "RESUME", "TASK_VIEW"}})})
+    owner = host.authenticate("owner", "private")
+    svc = RegistryService(db, host)
+    svc.create_scope(owner, classification="PRIVATE")
+    p = svc.register_project(owner, "private meta", "CLIENT")
+    limited = host.authenticate("limited", "private")
+    with pytest.raises(AccessDenied):
+        svc.list_registry(limited)
+    with pytest.raises(AccessDenied):
+        svc.get_registry(limited, p)
+    with pytest.raises(AccessDenied):
+        svc.resume(limited, p)
+
+
+def test_ac021_done_task_does_not_approve_anything(env):
+    db, _host, svc, a, _ = env
+    pid = svc.register_project(a, "package", "PACKAGE")
+    actor = ActorContext("alice", "a")
+    m0 = ProjectService(partial(SqliteUnitOfWork, db), ExplicitPolicy({"alice": M0_PERMS}), FixedClock(NOW))
+    project_id = ProjectId(UUID(pid))
+    m0.transition_project(actor, project_id, ProjectStatus.PLANNED)
+    m0.transition_project(actor, project_id, ProjectStatus.ACTIVE)
+    tid = m0.create_task(actor, project_id, "done")
+    m0.transition_task(actor, tid, TaskStatus.READY)
+    m0.transition_task(actor, tid, TaskStatus.IN_PROGRESS)
+    m0.transition_task(actor, tid, TaskStatus.DONE)
+    assert m0.get_task(actor, tid).status == TaskStatus.DONE
+    assert svc.list_history(a, pid, "approval") == ()
+    assert svc.verify_status(a, pid, target_ref="release", revision="sha1", criterion="APPROVED") == "UNKNOWN"
+
+
+def test_ac023_portfolio_park_is_independent_from_project_on_hold(env):
+    db, _, svc, a, _ = env
+    pid = svc.register_project(a, "bundle", "PACKAGE")
+    actor = ActorContext("alice", "a")
+    m0 = ProjectService(partial(SqliteUnitOfWork, db), ExplicitPolicy({"alice": M0_PERMS}), FixedClock(NOW))
+    project_id = ProjectId(UUID(pid))
+    m0.transition_project(actor, project_id, ProjectStatus.PLANNED)
+    m0.transition_project(actor, project_id, ProjectStatus.ACTIVE)
+    m0.transition_project(actor, project_id, ProjectStatus.ON_HOLD)
+    did = svc.record_decision(a, pid, subject="portfolio", statement="PARK", portfolio=PortfolioDecision.PARK)
+    assert did
+    assert svc.get_registry(a, pid).project_status == "ON_HOLD"
+    assert svc.list_history(a, pid, "decision")[-1]["portfolio"] == "PARK"
+
+
+def test_ac025_personal_finance_fixture_has_no_sensitive_raw_data(env):
+    db, _, svc, actor, _ = env
+    pid = svc.register_project(actor, "Finance fictive", "PERSONAL")
+    svc.record_blocker(actor, pid, "Données réelles non importées")
+    result = svc.export_project(actor, pid)
+    assert result["project"]["family"] == "PERSONAL"
+    with db.connection() as conn:
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert not tables.intersection({"bank_transactions", "account_statements", "payment_cards"})
