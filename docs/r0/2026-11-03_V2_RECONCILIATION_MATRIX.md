@@ -70,3 +70,7 @@ La V1 Requirements §34 impose aussi l'installation du package (`AC-001`), l'int
 ## Critère de preuve
 
 Une décision contient un owner, une date et une référence d'approbation explicite. Un résultat de test contient un SHA, l'environnement et le contrôle réellement exécuté. Aucune valeur `PASS`, `GO`, `QUALIFIED` ou `ACCEPTED` n'est attribuée ici.
+
+## Décision postérieure à la première revue : D-SEM-01 ACCEPTED
+
+Le 2026-11-03, le propriétaire du projet a explicitement approuvé l'option A de [D-SEM-01](../adr/D-SEM-01_V1_V2_RULE_IDENTIFIER_COMPATIBILITY.md) ([enregistrement](https://github.com/tawounfouet/pyprojectkit/issues/2#issuecomment-6599599491)). La collision des six identifiants `GAP-07` dispose donc d'un **arbitrage formel**. Le correctif est préparé dans la copie de 07 V2 sur la PR #4 ; le statut de la baseline complète demeure `REVIEW`. Les autres GAP et les sept arbitrages M0 ne sont pas couverts par cette approbation.
