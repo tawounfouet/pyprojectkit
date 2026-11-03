@@ -1,0 +1,64 @@
+"""Ports hexagonaux du noyau M0, sans dépendance aux adaptateurs."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Protocol, Self
+from uuid import UUID
+
+from .domain import Dependency, DomainEvent, Project, ProjectId, Task, TaskId
+
+
+@dataclass(frozen=True, slots=True)
+class ActorContext:
+    """Principal établi par l'hôte, jamais directement par un payload non fiable."""
+
+    actor_id: str
+    scope: str
+
+
+class Clock(Protocol):
+    def now(self) -> datetime: ...
+
+
+class IdFactory(Protocol):
+    def new(self) -> UUID: ...
+
+
+class AuthorizationPolicy(Protocol):
+    def require(self, actor: ActorContext, permission: str) -> None: ...
+
+
+class ProjectRepository(Protocol):
+    def get(self, identifier: ProjectId) -> Project | None: ...
+    def list_all(self) -> list[Project]: ...
+    def add(self, obj: Project) -> None: ...
+    def save(self, obj: Project, *, expected_version: int) -> None: ...
+
+
+class TaskRepository(Protocol):
+    def get(self, identifier: TaskId) -> Task | None: ...
+    def list_all(self) -> list[Task]: ...
+    def add(self, obj: Task) -> None: ...
+    def save(self, obj: Task, *, expected_version: int) -> None: ...
+
+
+class DependencyGraphPort(Protocol):
+    def snapshot(self, project_id: ProjectId) -> tuple[int, set[Dependency]]: ...
+    def replace_if_version(
+        self, project_id: ProjectId, *, expected_version: int, edges: set[Dependency]
+    ) -> None: ...
+
+
+class UnitOfWork(Protocol):
+    projects: ProjectRepository
+    tasks: TaskRepository
+    dependencies: DependencyGraphPort
+
+    def __enter__(self) -> Self: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: object
+    ) -> None: ...
+    def record(self, event: DomainEvent) -> None: ...
+    def commit(self) -> None: ...
+    def rollback(self) -> None: ...
