@@ -262,3 +262,36 @@ def test_18_end_to_end_authorized_brief(workspace):
     assert all(word not in brief.to_json() for word in ("SECRET", "PRIVATE EVIDENCE"))
     assert "PUBLISH" not in brief.allowed_actions and "APPROVE" not in brief.allowed_actions
     assert brief.expires_at > NOW
+
+
+def test_19_valid_mandate_cannot_override_m1_owner_visibility(workspace):
+    # Mandat host-side volontairement trop permissif : M1 doit encore refuser le propriétaire.
+    task_b = WorkItemRef("TASK", str(workspace["t2"].value))
+    mandate = replace(workspace["mandate"], mandate_id="overbroad-host-mandate",
+                      project_id=workspace["p2"], work_item_ref=task_b)
+    workspace["store"].provision(mandate)
+    req = BuildBriefRequest(mandate.mandate_id, workspace["p2"], task_b, "AUDIT", REF)
+    with pytest.raises(NotFound, match="indisponible"):
+        workspace["svc"].execute(workspace["alice"], req)
+
+
+def test_20_concurrent_task_change_blocks_stale_brief(workspace, monkeypatch):
+    original = workspace["registry"].list_tasks
+    attempts = [0]
+    def modified(*args, **kwargs):
+        attempts[0] += 1
+        rows = original(*args, **kwargs)
+        if attempts[0] == 2:
+            return tuple({**row, "version": "999"} for row in rows)
+        return rows
+    monkeypatch.setattr(workspace["registry"], "list_tasks", modified)
+    from pyprojectkit import Conflict
+    with pytest.raises(Conflict):
+        workspace["svc"].execute(workspace["alice"], workspace["req"])
+    assert attempts[0] == 2
+
+
+def test_21_mandate_suspended_before_read(workspace):
+    workspace["store"].suspend(workspace["mandate"].mandate_id)
+    with pytest.raises(AccessDenied):
+        workspace["svc"].execute(workspace["alice"], workspace["req"])
