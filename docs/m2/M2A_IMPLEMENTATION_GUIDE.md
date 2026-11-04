@@ -29,12 +29,16 @@ Toutes les interfaces M2 sont facultatives. Le domaine M0 n'importe pas M2, Pyth
 - Versions/champs inconnus, dates naïves, clés dupliquées et valeurs incorrectes sont refusés.
 - Limite de 16 384 octets, 32 éléments maximum par liste, champs texte bornés.
 - La révision `GIT_COMMIT` requiert un SHA 40 caractères hexadécimaux. Sa présence dans GitHub n'est **pas** vérifiée par M2-A.
+- `resource_ref` est un identifiant opaque ; URI signée, query string et credential inline refusés.
 - Le brief expire au plus tard 20 minutes après sa création, sans dépasser le mandat.
 - `allowed_actions` n'inclut que `PROJECT_VIEW` et `TASK_VIEW`; c'est une **description** de droits effectifs, non un jeton utilisable.
 - Les niveaux `A4`/`A5` et toute mutation externe restent hors M2-A.
 - Pour `AUDIT`, le niveau `A0` est obligatoire.
 
 ### Frontière de sécurité
+
+**Décision conservatrice M2-A** : les scopes `PRIVATE` sont refusés même lorsque l'acteur humain possède `READ_PRIVATE`. Le droit de cet acteur ne suffit pas à autoriser la divulgation au délégué; un futur mandat de classification explicite exigerait un ADR séparé.
+
 
 `InMemoryMandateStore` doit être alimenté exclusivement par l'hôte de confiance. Le package n'isole pas du code Python hostile exécuté dans le même processus, ne chiffre pas SQLite et ne garantit ni la confidentialité de contenus arbitraires inscrits dans un titre de tâche ni une atomicité inter-systèmes. **Fixtures synthétiques uniquement**.
 
