@@ -90,6 +90,9 @@ class ExactTargetReference:
         if self.source_type not in ("GIT_COMMIT", "DOCUMENT_VERSION", "PROJECT_REVISION"):
             raise InvalidValue("Type de référence non pris en charge")
         _str(self.resource_ref, "resource_ref", limit=256)
+        # Identifiant opaque seulement : ne pas propager URL signée, query ou credential.
+        if any(token in self.resource_ref for token in ("://", "?", "#", "@", "\\n", "\\r")):
+            raise InvalidValue("Référence opaque requise")
         _str(self.revision, "revision", limit=256)
         if self.source_type == "GIT_COMMIT" and not _SHA.fullmatch(self.revision):
             raise InvalidValue("Référence Git: SHA de commit complet requis")
