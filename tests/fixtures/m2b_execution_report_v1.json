@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "report_id": "00000000-0000-0000-0000-000000000301",
+  "brief_id": "00000000-0000-0000-0000-000000000302",
+  "mandate_id": "synthetic-fixture-mandate",
+  "scope_id": "synthetic",
+  "project_id": "00000000-0000-0000-0000-000000000303",
+  "work_item_ref": {
+    "kind": "TASK",
+    "id": "00000000-0000-0000-0000-000000000304"
+  },
+  "mode": "AUDIT",
+  "target_reference": {
+    "source_type": "GIT_COMMIT",
+    "resource_ref": "synthetic/repository",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "source_watermark": "m1:task:synthetic:v1",
+  "produced_at": "2026-11-04T12:00:00+00:00",
+  "outcome": "SUCCEEDED",
+  "reported_status": "QUALIFIED",
+  "idempotency_key": "synthetic-fixture-1",
+  "changes_made": [],
+  "verification_performed": [
+    "Synthetic check declared by producer"
+  ],
+  "evidence_references": [
+    {
+      "source_type": "GIT_COMMIT",
+      "resource_ref": "synthetic/repository",
+      "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "claim": "CI declared green",
+      "available": true
+    }
+  ],
+  "limitations": [
+    "Fixtures only"
+  ],
+  "residual_risks": [
+    "No real CI attestation"
+  ],
+  "human_decisions_required": [
+    "Independent human decision"
+  ],
+  "next_action": "Request separate review"
+}
