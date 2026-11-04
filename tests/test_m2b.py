@@ -246,3 +246,126 @@ def test_m2b_15_sqlite_append_only_and_schema_0003(m2):
             conn.execute("DELETE FROM m2_report_inbox WHERE ingestion_id=?", (rec.ingestion_id,))
         with pytest.raises(sqlite3.IntegrityError):
             conn.execute("UPDATE m2_report_inbox SET status='REJECTED' WHERE ingestion_id=?", (rec.ingestion_id,))
+
+
+def test_m2b_16_ephemeral_m2a_brief_is_not_an_issued_receipt(m2):
+    from pyprojectkit.m2 import BuildAuthorizedOperatingBrief
+    ephemeral = BuildAuthorizedOperatingBrief(
+        m2["registry"], m2["verifier"], FixedClock(NOW)
+    ).execute(m2["actor"], m2["req"])
+    report = FakePythosAdapter().make_report(ephemeral, produced_at=NOW)
+    with pytest.raises(NotFound):
+        m2["inbox"].receive(m2["actor"], report)
+
+
+def test_m2b_17_report_declares_changes_in_audit_rejected(m2):
+    before = _snap(m2["db"])
+    with pytest.raises(InvalidValue):
+        m2["inbox"].receive(m2["actor"], replace(m2["report"], changes_made=("DELETE",)))
+    assert _snap(m2["db"]) == before
+
+
+def test_m2b_18_signed_url_and_secret_not_persisted(m2):
+    before = _snap(m2["db"])
+    with pytest.raises(InvalidValue):
+        m2["inbox"].receive(
+            m2["actor"], replace(m2["report"], next_action="Bearer synthetic-secret")
+        )
+    assert _snap(m2["db"]) == before
+    with pytest.raises(InvalidValue):
+        from pyprojectkit.m2.reports import ReportEvidenceRefDTO
+        ReportEvidenceRefDTO("CI_RUN", "https://source.example/?token=x", "a"*40, "test", True)
+
+
+def test_m2b_19_produced_at_outside_freshness_policy(m2):
+    for at in (NOW + timedelta(minutes=6), NOW - timedelta(hours=25)):
+        with pytest.raises(InvalidValue):
+            m2["inbox"].receive(m2["actor"], replace(m2["report"], produced_at=at))
+
+
+def test_m2b_20_replay_after_revocation_cannot_leak_receipt(m2):
+    m2["inbox"].receive(m2["actor"], m2["report"])
+    m2["mandates"].revoke(m2["mandate"].mandate_id)
+    with pytest.raises(AccessDenied):
+        m2["inbox"].reconcile(m2["actor"], m2["report"])
+    with pytest.raises(AccessDenied):
+        m2["inbox"].receive(m2["actor"], m2["report"])
+
+
+def test_m2b_21_other_retry_key_for_existing_report_conflicts(m2):
+    m2["inbox"].receive(m2["actor"], m2["report"])
+    with pytest.raises(IdempotencyConflict):
+        m2["inbox"].receive(
+            m2["actor"], replace(m2["report"], idempotency_key="different-intent")
+        )
+
+
+def test_m2b_22_changed_report_id_for_existing_key_conflicts(m2):
+    m2["inbox"].receive(m2["actor"], m2["report"])
+    with pytest.raises(IdempotencyConflict):
+        m2["inbox"].receive(
+            m2["actor"], replace(m2["report"], report_id=str(uuid4()))
+        )
+
+
+def test_m2b_23_wrong_revision_refuses_independent_verification(m2):
+    from pyprojectkit.m2.reports import ReportEvidenceRefDTO
+    wrong = ReportEvidenceRefDTO("GIT_COMMIT", "synthetic/repository", "b"*40, "wrong revision", True)
+    forged = replace(m2["report"], evidence_references=(wrong,))
+    receipt = m2["inbox"].receive(m2["actor"], forged)
+    with pytest.raises(Conflict):
+        m2["governance"].request_verification(
+            m2["actor"], receipt.ingestion_id, 0, "CI", FakeIndependentEvidenceVerifier()
+        )
+
+
+def test_m2b_24_unavailable_evidence_cannot_promote_pass(m2):
+    from pyprojectkit.m2.reports import ReportEvidenceRefDTO
+    unavailable = ReportEvidenceRefDTO(
+        "GIT_COMMIT", "synthetic/repository", SHA, "not accessible", False
+    )
+    report = replace(m2["report"], evidence_references=(unavailable,))
+    receipt = m2["inbox"].receive(m2["actor"], report)
+    fake = FakeIndependentEvidenceVerifier({
+        ("synthetic/repository", SHA, "CI"): VerificationResult(
+            "PASS", "synthetic-source", "synthetic/repository"
+        )
+    })
+    m2["governance"].request_verification(
+        m2["actor"], receipt.ingestion_id, 0, "CI", fake
+    )
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT result FROM m2_verifications").fetchone()[0] == "UNKNOWN"
+
+
+def test_m2b_25_unapproved_request_cannot_create_approval(m2):
+    receipt = m2["inbox"].receive(m2["actor"], m2["report"])
+    request = m2["governance"].request_human_decision(
+        m2["actor"], receipt.ingestion_id, subject="G5", reason="Revue manuelle"
+    )
+    assert request.status == "PENDING"
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM m2_human_decisions").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM history WHERE kind='approval'").fetchone()[0] == 0
+
+
+def test_m2b_26_weak_host_permissions_are_refused_before_write(m2):
+    weak = TrustedHost({
+        "limited": ("owner", {"alpha": set(PERMS) - {"REPORT_RECEIVE"}})
+    })
+    actor = weak.authenticate("limited", "alpha")
+    svc = ReportInboxService(
+        RegistryService(m2["db"], weak, FixedClock(NOW)),
+        MandateVerifier(weak, m2["mandates"]), FixedClock(NOW)
+    )
+    before = _snap(m2["db"])
+    with pytest.raises(AccessDenied):
+        svc.receive(actor, m2["report"])
+    assert _snap(m2["db"]) == before
+
+
+def test_m2b_27_checksum_tamper_of_migration_0003_rejected(m2):
+    with m2["db"].connection() as conn:
+        conn.execute("UPDATE schema_migrations SET checksum='tampered' WHERE version=3")
+    with pytest.raises(Conflict):
+        SqliteDatabase(m2["db"].path)
