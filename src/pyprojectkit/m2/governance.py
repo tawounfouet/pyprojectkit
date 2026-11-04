@@ -127,3 +127,66 @@ class ReportGovernanceService:
             uow.commit()
             return request_id
 
+
+    def request_human_decision(self, actor: VerifiedActor, ingestion_id: str,
+                               *, subject: str, reason: str) -> HumanDecisionRequest:
+        self.registry.authority.require(actor, "HUMAN_REQUEST")
+        if not isinstance(subject, str) or not subject.strip() or len(subject) > 256:
+            raise InvalidValue("Objet invalide")
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 512:
+            raise InvalidValue("Justification invalide")
+        report = self._report(actor, ingestion_id).report
+        with SqliteUnitOfWork(self.registry.db) as uow:
+            self.inbox._project_in_transaction(uow, actor, report.project_id, report.work_item_ref.id)
+            request_id = str(uuid4())
+            uow._db().execute(
+                """INSERT INTO m2_human_requests
+                   (request_id,ingestion_id,requested_by,subject,reason,created_at)
+                   VALUES(?,?,?,?,?,?)""",
+                (request_id, ingestion_id, actor.actor_id, subject, reason,
+                 _now(self.clock).isoformat()),
+            )
+            self.registry.authority.require(actor, "HUMAN_REQUEST")
+            uow.commit()
+            return HumanDecisionRequest(request_id, ingestion_id, subject, actor.actor_id, "PENDING")
+
+    def decide_human_request(self, actor: VerifiedActor, request_id: str, *,
+                             outcome: str, rationale: str) -> HumanDecision:
+        self.registry.authority.require(actor, "HUMAN_DECIDE")
+        self.registry.authority.require(actor, "APPROVE")
+        self.registry.authority.require(actor, "WRITE_DECISION")
+        if outcome not in ("APPROVED", "REJECTED", "MORE_INFO"):
+            raise InvalidValue("Décision invalide")
+        if not isinstance(rationale, str) or not rationale.strip() or len(rationale) > 512:
+            raise InvalidValue("Motif requis")
+        with SqliteUnitOfWork(self.registry.db) as uow:
+            row = uow._db().execute(
+                """SELECT q.*,r.project_id,r.task_id,r.scope_id,r.received_by
+                   FROM m2_human_requests q
+                   JOIN m2_report_inbox r ON q.ingestion_id=r.ingestion_id
+                   WHERE q.request_id=? AND r.scope_id=?""",
+                (request_id, actor.scope_id),
+            ).fetchone()
+            if row is None:
+                raise NotFound("Ressource indisponible")
+            self.inbox._project_in_transaction(uow, actor, row["project_id"], row["task_id"])
+            if actor.actor_id in (row["requested_by"], row["received_by"]):
+                raise AccessDenied("Séparation des fonctions requise")
+            if uow._db().execute("SELECT 1 FROM m2_human_decisions WHERE request_id=?",
+                                 (request_id,)).fetchone() is not None:
+                raise Conflict("Décision déjà prise")
+            identifier, history_id, at = str(uuid4()), str(uuid4()), _now(self.clock).isoformat()
+            uow.records.append(HistoryRecord(
+                history_id, "decision", row["project_id"], actor.scope_id, "INTERNAL", at,
+                {"subject": "M2_REPORT_REVIEW", "statement": outcome,
+                 "source_ref": f"m2-human-request:{request_id}", "rationale": rationale,
+                 "decided_by": actor.actor_id, "no_task_transition": True}, 0,
+            ))
+            uow._db().execute(
+                """INSERT INTO m2_human_decisions
+                   (decision_id,request_id,decided_by,outcome,rationale,decided_at,history_id)
+                   VALUES(?,?,?,?,?,?,?)""",
+                (identifier, request_id, actor.actor_id, outcome, rationale, at, history_id),
+            )
+            uow.commit()
+            return HumanDecision(identifier, request_id, actor.actor_id, outcome, rationale)
