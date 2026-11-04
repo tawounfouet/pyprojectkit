@@ -126,7 +126,7 @@ def test_migrations_idempotent_checksum_and_unknown_version(env):
     db, *_ = env
     migrate(db.path)
     with db.connection() as c:
-        assert c.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+        assert c.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 3
         c.execute("UPDATE schema_migrations SET checksum=? WHERE version=2", ("tampered",))
     with pytest.raises(Conflict, match="modifiée"):
         migrate(db.path)
