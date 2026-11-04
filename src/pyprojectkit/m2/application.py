@@ -59,6 +59,9 @@ class BuildAuthorizedOperatingBrief:
             work_item_ref=request.work_item_ref, mode=request.mode,
             target_reference=request.target_reference, now=start,
         )
+        # La délégation PRIVATE n'a pas encore de politique de divulgation M2-A.
+        if self.registry.read_scope_classification(actor) != "INTERNAL":
+            raise AccessDenied("Mandat indisponible ou non autorisé")
         # M1 applique déjà les droits de lecture, classifications, scopes et owner-sharing.
         project = self.registry.get_registry(actor, request.project_id)
         if project.scope_id != actor.scope_id or project.project_id != request.project_id:
@@ -80,9 +83,15 @@ class BuildAuthorizedOperatingBrief:
                         if item["id"] == request.work_item_ref.id), None)
         if updated != task:
             raise Conflict("Contexte tâche modifié pendant la projection")
-        self.verifier.require_current(actor, mandate, self.clock.now().astimezone(timezone.utc))
+        if self.registry.read_scope_classification(actor) != "INTERNAL":
+            raise AccessDenied("Mandat indisponible ou non autorisé")
+        last_seen = self.clock.now()
+        if not isinstance(last_seen, datetime) or last_seen.utcoffset() is None:
+            raise InvalidValue("Horloge de brief invalide")
+        last_seen = last_seen.astimezone(timezone.utc)
+        self.verifier.require_current(actor, mandate, last_seen)
         expiry = min(mandate.expires_at.astimezone(timezone.utc), start + timedelta(minutes=20))
-        if expiry <= start:
+        if expiry <= last_seen:
             raise AccessDenied("Mandat indisponible ou non autorisé")
 
         # Liste blanche strictement orientée tâche. Pas de history, evidence, URI ni export.
