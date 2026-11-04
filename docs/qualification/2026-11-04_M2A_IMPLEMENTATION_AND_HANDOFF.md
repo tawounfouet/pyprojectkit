@@ -6,7 +6,7 @@
 >
 > Baseline de `main` : `26487b61f54a49fa1d5eec6bd2d36eda01524ac8`
 >
-> **SHA de code soumis aux vérifications citées** : `a75939df42ec74a184ba4d15cdb1045c59a9f46d`
+> **SHA de code soumis aux vérifications citées** : `c3a04e9a5fe35687e8270022a7a0d3b69abe88b2`
 >
 > Branche : `feat/m2a-authorized-brief` ; PR #16, draft
 >
@@ -28,12 +28,12 @@ Composants : `src/pyprojectkit/m2/{__init__,contracts,mandates,application}.py`,
 
 ## 2. Preuves d'exécution au SHA exact
 
-CI : [GitHub Actions run #100](https://github.com/tawounfouet/pyprojectkit/actions/runs/41846202849), déclenché sur le commit `a75939df42ec74a184ba4d15cdb1045c59a9f46d` (la PR peut générer un commit de merge synthétique pour la vérification).
+CI : [GitHub Actions run #116](https://github.com/tawounfouet/pyprojectkit/actions/runs/41846997515), déclenché sur le commit `c3a04e9a5fe35687e8270022a7a0d3b69abe88b2` (la PR peut générer un commit de merge synthétique pour la vérification).
 
-| Contrôle | Python 3.12 (job 126630244135) | Python 3.13 (job 126630244801) |
+| Contrôle | Python 3.12 (job 126633009966) | Python 3.13 (job 126633009119) |
 |---|---|---|
-| pytest complet | **65 PASS** | **65 PASS** |
-| Différence M2-A vs baseline 41 | 24 tests M2-A | 24 tests M2-A |
+| pytest complet | **68 PASS** | **68 PASS** |
+| Différence M2-A vs baseline 41 | 27 tests M2-A | 27 tests M2-A |
 | `mypy --strict` | **PASS, 17 fichiers** | **PASS, 17 fichiers** |
 | Exemple `VS-M2-01` | **PASS** | **PASS** |
 | Build `pyprojectkit-0.2.0a1-py3-none-any.whl` | **PASS** | **PASS** |
@@ -49,7 +49,9 @@ Le numéro `0.2.0a1` reste la version du package M0/M1 dans la configuration; l'
 - Mandat : `actor_id`, `delegate_id`, `scope_id`, `project_id`, `WorkItemRef`, `mode` et `ExactTargetReference` contrôlés.
 - Temporalité : refus d'un mandat expiré, suspendu ou révoqué, y compris changement de validité durant la projection.
 - Confidentialité : refus cross-scope et inter-owner même avec un mandat host-side trop permissif ; accès autorisé uniquement sur partage explicite du projet.
-- `PRIVATE` : absence de `READ_PRIVATE` entraîne un refus ; aucune histoire de preuves privées n'est projetée.
+- `PRIVATE` : les scopes PRIVATE sont exclus de M2-A, même si l'acteur possède READ_PRIVATE. Un droit de lecture humain n'est pas un droit de divulgation à Pythos.
+- Références : les identifiants opaques sont exigés, les URI signées, credentials et query strings sont refusés.
+- TTL : refus si une projection lente dépasse la durée de validité de son propre brief.
 - `AUDIT/A0` : lecture seule ; A2 ne permet pas de publier, fusionner ou supprimer ; A4/A5 non pris en charge dans M2-A.
 - Anti-TOCTOU : revalidation de mandat et relecture du contexte ; refus en cas de variation observée de tâche.
 - Absence de mutation : comparaison des versions/statuts Project/Task et des enregistrements de history avant/après.
@@ -75,6 +77,7 @@ Limites importantes :
 - SQLite local non chiffré et session `TrustedHost` M1 supposée de confiance.
 - `InMemoryMandateStore` ne constitue pas un service IAM de production, ni une source persistée de mandats interprocessus.
 - Absence d'isolation face à du Python hostile dans le même processus.
+- Les scopes PRIVATE ne sont pas délégués dans le pilote M2-A ; une future délégation explicite exigera un ADR et des tests.
 - Les titres de tâches M1 sont des champs du domaine : pas de scanner générique de secrets ni de garantie de nettoyage s'ils contiennent des informations sensibles.
 - SHA Git syntaxiquement exact, mais disponibilité du commit non contrôlée chez GitHub.
 - Revalidation avant restitution, sans transaction distribuée ni garantie sur des actions futures du consommateur.
@@ -87,10 +90,10 @@ Limites importantes :
 handoff_m2a_to_m2b:
   implemented: true
   pilot_scope: SYNTHETIC_LOCAL
-  code_sha: a75939df42ec74a184ba4d15cdb1045c59a9f46d
-  ci_run_id: 41846202849
-  python_312: SUCCESS_65_PASS
-  python_313: SUCCESS_65_PASS
+  code_sha: c3a04e9a5fe35687e8270022a7a0d3b69abe88b2
+  ci_run_id: 41846997515
+  python_312: SUCCESS_68_PASS
+  python_313: SUCCESS_68_PASS
   mypy_strict: SUCCESS
   authorized_brief_schema: "1.0"
   mandate_store: IN_MEMORY_HOST_TRUSTED_ONLY
@@ -113,7 +116,7 @@ handoff_m2a_to_m2b:
 ## 8. Liens
 
 - [PR #16](https://github.com/tawounfouet/pyprojectkit/pull/16)
-- [CI #100](https://github.com/tawounfouet/pyprojectkit/actions/runs/41846202849)
+- [CI #116](https://github.com/tawounfouet/pyprojectkit/actions/runs/41846997515)
 - `docs/m2/M2A_IMPLEMENTATION_GUIDE.md`
 - `docs/adr/ADR-M2-01-operating-brief-v1.md`
 - `docs/adr/ADR-M2-02-delegated-authority.md`
