@@ -139,6 +139,7 @@ def run_pilots() -> None:
         assert git(repo_root, "rev-parse", "HEAD") == sha
         assert git(repo_root, "rev-parse", "HEAD^{tree}") == tree
         assert git(repo_root, "status", "--porcelain") == ""
+        print(f"SYNTHETIC_GIT_HEAD={sha} TREE={tree} STATUS=CLEAN")
         print("VS-M2-04 PASS: two segregated local synthetic pilots")
         print("M2-10 PASS: independent process restarted from SQLite")
         print("Q-M2: human gate PENDING, no publication")
