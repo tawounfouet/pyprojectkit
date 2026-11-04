@@ -368,3 +368,9 @@ def test_25_brief_cannot_be_returned_after_own_ttl(workspace, monkeypatch):
     monkeypatch.setattr(workspace["registry"], "list_tasks", slow_projection)
     with pytest.raises(AccessDenied):
         svc.execute(workspace["alice"], workspace["req"])
+
+
+def test_26_signed_uri_or_credential_ref_not_projected():
+    for value in ("https://private.example/file?token=secret", "user@example.local", "repo#access"):
+        with pytest.raises(InvalidValue):
+            ExactTargetReference("GIT_COMMIT", value, "a" * 40)
