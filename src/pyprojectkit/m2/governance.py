@@ -81,6 +81,7 @@ class ReportGovernanceService:
         self.registry.authority.require(actor, "ASSESS")
         self.registry.authority.require(actor, "WRITE_ASSESSMENT")
         self.registry.authority.require(actor, "READ_EVIDENCE")
+        self.registry.authority.require(actor, "WRITE_OBSERVATION")
         if not isinstance(criterion, str) or not criterion.strip() or len(criterion) > 256:
             raise InvalidValue("Critère invalide")
         report = self._report(actor, ingestion_id).report
@@ -110,11 +111,12 @@ class ReportGovernanceService:
             self.registry.authority.require(actor, "ASSESS")
             self.registry.authority.require(actor, "WRITE_ASSESSMENT")
             uow.records.append(HistoryRecord(
-                history_id, "assessment", report.project_id, actor.scope_id, "INTERNAL", at,
-                {"target_ref": evidence.resource_ref, "revision": evidence.revision,
-                 "criterion": criterion, "result": result.result, "method": result.method,
-                 "evaluator": actor.actor_id, "source_ref": result.source_ref,
-                 "report_id": report.report_id}, 0
+                history_id, "observation", report.project_id, actor.scope_id, "INTERNAL", at,
+                {"subject": "M2_VERIFICATION_PILOT", "value": f"CHECK_RECORDED:{result.result}",
+                 "source_ref": f"m2-verification:{request_id}", "observed_at": at,
+                 "available": True, "revision": evidence.revision,
+                 "criterion": criterion, "method": result.method,
+                 "report_id": report.report_id, "not_m1_assessment": True}, 0
             ))
             uow._db().execute(
                 """INSERT INTO m2_verifications
