@@ -97,6 +97,7 @@ def two_pilots(tmp_path: Path) -> dict[str, PilotContext]:
         "software-credential": ("software-owner", {"m2c-software": set(WRITER)}),
         "education-credential": ("education-owner", {"m2c-education": set(WRITER)}),
         "software-review": ("software-reviewer", {"m2c-software": set(REVIEWER)}),
+        "other-owner-credential": ("another-owner", {"m2c-software": set(WRITER)}),
         "education-review": ("education-reviewer", {"m2c-education": set(REVIEWER)}),
     }, rules={
         "m2c-software": ScopeRule(allowed_families=frozenset({"PACKAGE"})),
