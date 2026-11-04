@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import json
 import sqlite3
-from typing import Callable
+from typing import Callable, cast
 from uuid import UUID, uuid4
 
 from ..domain import AccessDenied, CommitOutcomeUnknown, Conflict, InvalidValue, NotFound, ProjectId, TaskId
@@ -143,7 +143,7 @@ class ReportInboxService:
                 or row["source_watermark"] != report.source_watermark
                 or row["issuer_id"] != actor.actor_id):
             raise AccessDenied(DENIED)
-        return row
+        return cast(sqlite3.Row, row)
 
     def _authorized_receive(self, actor: VerifiedActor, report: ExecutionReportDTO,
                             *, now: datetime) -> None:
