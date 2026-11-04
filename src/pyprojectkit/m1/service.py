@@ -98,6 +98,26 @@ class RegistryService:
             or self.authority.permits(actor, f"PROJECT_VIEW:{row['project_id']}")
         )]
 
+    def read_scope_classification(self, actor: VerifiedActor) -> str:
+        """Lecture M1 protégée de la classification du scope courant.
+
+        Un droit de lecture sur un projet PRIVATE ne vaut pas permission de le
+        divulguer à un délégué M2. Ce reader expose uniquement la classification.
+        """
+        self.authority.require(actor, "PROJECT_VIEW")
+        with SqliteUnitOfWork(self.db) as uow:
+            row = uow._db().execute(
+                "SELECT classification FROM context_scopes WHERE id=?", (actor.scope_id,)
+            ).fetchone()
+            if row is None:
+                raise NotFound("Ressource indisponible")
+            classification = str(row["classification"])
+            if classification == "PRIVATE":
+                self.authority.require(actor, "READ_PRIVATE")
+            elif classification != "INTERNAL":
+                raise AccessDenied("Accès indisponible")
+            return classification
+
     def create_scope(self, actor: VerifiedActor, *, policy_ref: str = "local-pilot",
                      classification: str = "INTERNAL") -> None:
         self.authority.require(actor, "SCOPE_CREATE")
