@@ -118,8 +118,10 @@ class ResumeWorkItemQuery:
 
         verification = "DECLARED" if report_ids else "UNAVAILABLE"
         if verification_rows:
-            # Une validation synthétique M2 n'est jamais un PASS externe/M1.
-            verification = "SYNTHETIC_CHECK_RECORDED"
+            # Une vérification M2 ne devient jamais un PASS externe/M1.
+            observed = {str(row["result"]) for row in verification_rows}
+            verification = ("UNKNOWN" if observed == {"UNKNOWN"}
+                            else "SYNTHETIC_CHECK_RECORDED")
         review = "UNAVAILABLE"
         if review_rows:
             review = "PENDING" if any(row["outcome"] is None for row in review_rows) else "DECIDED"
