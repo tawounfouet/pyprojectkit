@@ -369,3 +369,147 @@ def test_m2b_27_checksum_tamper_of_migration_0003_rejected(m2):
         conn.execute("UPDATE schema_migrations SET checksum='tampered' WHERE version=3")
     with pytest.raises(Conflict):
         SqliteDatabase(m2["db"].path)
+
+
+def test_m2b_28_concurrent_retries_have_single_receipt(m2):
+    from concurrent.futures import ThreadPoolExecutor
+    def receive_one(_):
+        return m2["inbox"].receive(m2["actor"], m2["report"])
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        outcomes = list(pool.map(receive_one, range(8)))
+    assert len({x.ingestion_id for x in outcomes}) == 1
+    assert sum(not x.is_replay for x in outcomes) == 1
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM m2_report_inbox").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM m2_report_links").fetchone()[0] == 3
+
+
+def test_m2b_29_commit_outcome_unknown_reconciled_without_duplicate(m2, monkeypatch):
+    from pyprojectkit import CommitOutcomeUnknown
+    original = SqliteUnitOfWork.commit
+    def ack_lost(tx):
+        original(tx)
+        raise CommitOutcomeUnknown("ACK lost after durable commit")
+    monkeypatch.setattr(SqliteUnitOfWork, "commit", ack_lost)
+    with pytest.raises(CommitOutcomeUnknown):
+        m2["inbox"].receive(m2["actor"], m2["report"])
+    monkeypatch.setattr(SqliteUnitOfWork, "commit", original)
+    result = m2["inbox"].reconcile(m2["actor"], m2["report"])
+    assert result is not None and result.is_replay
+    assert m2["inbox"].receive(m2["actor"], m2["report"]).ingestion_id == result.ingestion_id
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM m2_report_inbox").fetchone()[0] == 1
+
+
+def test_m2b_30_restart_in_another_python_process(m2):
+    import subprocess
+    import sys
+    report = m2["report"]
+    receipt = m2["inbox"].receive(m2["actor"], report)
+    script = """
+import sys
+from datetime import datetime, timedelta, timezone
+from pyprojectkit import FixedClock
+from pyprojectkit.m1 import SqliteDatabase, RegistryService, TrustedHost
+from pyprojectkit.m2 import DelegationMandate, InMemoryMandateStore, MandateVerifier, ReportInboxService, ExecutionReportDTO
+NOW = datetime(2026, 11, 4, 12, tzinfo=timezone.utc)
+perms = {'PROJECT_VIEW','TASK_VIEW','BRIEF_BUILD','REPORT_RECEIVE','REPORT_READ','READ_OBSERVATION','WRITE_OBSERVATION','WRITE_EVIDENCE','WRITE_HANDOFF'}
+actor_host = TrustedHost({'reprovisioned-host': ('owner', {'alpha': perms})})
+actor = actor_host.authenticate('reprovisioned-host', 'alpha')
+report = ExecutionReportDTO.from_json(sys.argv[2])
+store = InMemoryMandateStore()
+store.provision(DelegationMandate(
+    report.mandate_id,'owner','pythos',report.scope_id,report.project_id,report.work_item_ref,
+    report.mode,'A0',('PROJECT_VIEW','TASK_VIEW'),report.target_reference,
+    NOW-timedelta(minutes=2),NOW+timedelta(hours=2)
+))
+service = ReportInboxService(
+    RegistryService(SqliteDatabase(sys.argv[1]),actor_host,FixedClock(NOW)),
+    MandateVerifier(actor_host,store),FixedClock(NOW)
+)
+assert service.reconcile(actor,report) is not None
+out = service.receive(actor,report)
+assert out.is_replay and out.outcome == 'ALREADY_ACCEPTED'
+print(out.ingestion_id)
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", script, str(m2["db"].path), report.to_json()],
+        text=True, capture_output=True, check=True
+    )
+    assert completed.stdout.strip() == receipt.ingestion_id
+    assert _snap(m2["db"])["m2_report_inbox"] == 1
+
+
+def test_m2b_31_revoked_during_transaction_before_commit_rolls_back(m2, monkeypatch):
+    original = m2["inbox"]._project_in_transaction
+    triggered = [False]
+    def revoke_after_scope(*args, **kwargs):
+        result = original(*args, **kwargs)
+        if not triggered[0]:
+            triggered[0] = True
+            m2["mandates"].revoke(m2["mandate"].mandate_id)
+        return result
+    monkeypatch.setattr(m2["inbox"], "_project_in_transaction", revoke_after_scope)
+    before = _snap(m2["db"])
+    with pytest.raises(AccessDenied):
+        m2["inbox"].receive(m2["actor"], m2["report"])
+    assert _snap(m2["db"]) == before
+
+
+def test_m2b_32_acceptance_makes_no_domain_events(m2):
+    with m2["db"].connection() as conn:
+        before = {
+            table: tuple(tuple(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY rowid"))
+            for table in ("projects", "tasks", "event_history")
+        }
+    m2["inbox"].receive(m2["actor"], m2["report"])
+    with m2["db"].connection() as conn:
+        after = {
+            table: tuple(tuple(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY rowid"))
+            for table in ("projects", "tasks", "event_history")
+        }
+    assert before == after
+
+
+def test_m2b_33_multiple_reports_same_brief_have_distinct_intentions(m2):
+    first = m2["inbox"].receive(m2["actor"], m2["report"])
+    another = replace(m2["report"], report_id=str(uuid4()), idempotency_key="second-report")
+    second = m2["inbox"].receive(m2["actor"], another)
+    assert first.ingestion_id != second.ingestion_id
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM m2_report_inbox").fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM history WHERE kind='observation'").fetchone()[0] == 2
+
+
+def test_m2b_34_backup_restores_inbox_and_receipt(m2, tmp_path):
+    receipt = m2["inbox"].receive(m2["actor"], m2["report"])
+    copied = tmp_path / "backup.sqlite"
+    m2["db"].backup(copied)
+    restored = ReportInboxService(
+        RegistryService(SqliteDatabase(copied), m2["host"], FixedClock(NOW)),
+        m2["verifier"], FixedClock(NOW)
+    )
+    observed = restored.get_report(m2["actor"], receipt.ingestion_id)
+    assert observed.report.fingerprint() == m2["report"].fingerprint()
+
+
+def test_m2b_35_one_request_requires_a_distinct_human_decision(m2):
+    receipt = m2["inbox"].receive(m2["actor"], m2["report"])
+    req = m2["governance"].request_human_decision(
+        m2["actor"], receipt.ingestion_id, subject="Pilote", reason="Human review"
+    )
+    with pytest.raises(AccessDenied):
+        m2["governance"].decide_human_request(
+            m2["actor"], req.request_id, outcome="APPROVED", rationale="Not allowed"
+        )
+    approved = m2["governance"].decide_human_request(
+        m2["reviewer"], req.request_id, outcome="APPROVED", rationale="Synthetic review"
+    )
+    assert approved.outcome == "APPROVED"
+    with pytest.raises(Conflict):
+        m2["governance"].decide_human_request(
+            m2["reviewer"], req.request_id, outcome="APPROVED", rationale="Duplicate"
+        )
+    with m2["db"].connection() as conn:
+        assert conn.execute("SELECT status FROM tasks WHERE id=?", (m2["task"],)).fetchone()[0] == "TODO"
+        assert conn.execute("SELECT COUNT(*) FROM history WHERE kind='approval'").fetchone()[0] == 0
