@@ -328,3 +328,43 @@ def test_23_expiration_during_projection_fails_closed(workspace, monkeypatch):
     monkeypatch.setattr(workspace["registry"], "list_tasks", expire)
     with pytest.raises(AccessDenied):
         svc.execute(workspace["alice"], workspace["req"])
+
+
+def test_24_private_scope_still_denied_with_owner_read_private(tmp_path):
+    # Le droit personnel READ_PRIVATE n'est pas délégable implicitement à Pythos.
+    db = SqliteDatabase(tmp_path / "private-with-rights.sqlite")
+    permissions = {"SCOPE_CREATE", "PROJECT_CREATE", "PROJECT_VIEW", "TASK_CREATE",
+                   "TASK_VIEW", "BRIEF_BUILD", "READ_PRIVATE", "WRITE_PRIVATE"}
+    host = TrustedHost({"owner-key": ("owner", {"private-scope": permissions})})
+    actor = host.authenticate("owner-key", "private-scope")
+    registry = RegistryService(db, host, FixedClock(NOW))
+    registry.create_scope(actor, classification="PRIVATE")
+    pid = registry.register_project(actor, "Projet privé fictif", "PERSONAL")
+    core = ProjectService(partial(SqliteUnitOfWork, db),
+                          ExplicitPolicy({"owner": permissions}), FixedClock(NOW))
+    tid = core.create_task(actor.legacy(), ProjectId(__import__("uuid").UUID(pid)), "Titre privé")
+    work = WorkItemRef("TASK", str(tid.value))
+    store = InMemoryMandateStore()
+    store.provision(DelegationMandate(
+        "private-mandate", "owner", "pythos", "private-scope", pid, work,
+        "AUDIT", "A0", ("PROJECT_VIEW", "TASK_VIEW"), REF,
+        NOW - timedelta(minutes=1), NOW + timedelta(minutes=30)
+    ))
+    svc = BuildAuthorizedOperatingBrief(registry, MandateVerifier(host, store), FixedClock(NOW))
+    with pytest.raises(AccessDenied):
+        svc.execute(actor, BuildBriefRequest("private-mandate", pid, work, "AUDIT", REF))
+
+
+def test_25_brief_cannot_be_returned_after_own_ttl(workspace, monkeypatch):
+    clock = FixedClock(NOW)
+    svc = BuildAuthorizedOperatingBrief(
+        workspace["registry"], MandateVerifier(workspace["host"], workspace["store"]), clock
+    )
+    original = workspace["registry"].list_tasks
+    def slow_projection(*args, **kwargs):
+        output = original(*args, **kwargs)
+        clock.value = NOW + timedelta(minutes=25)  # mandat valide, TTL du brief dépassé
+        return output
+    monkeypatch.setattr(workspace["registry"], "list_tasks", slow_projection)
+    with pytest.raises(AccessDenied):
+        svc.execute(workspace["alice"], workspace["req"])
