@@ -11,6 +11,8 @@ from .governance import (
     IndependentEvidenceVerifier, ReportGovernanceService, VerificationResult,
 )
 from .fake import FakePythosAdapter
+from .resume_view import ResumeWorkItemQuery, ResumeWorkItemView
+from .qualification import AcceptanceEvidence, QualificationDossier, build_qualification_dossier
 
 __all__ = [
     "BuildAuthorizedOperatingBrief", "BuildBriefRequest", "DelegationMandate",
@@ -20,5 +22,6 @@ __all__ = [
     "ReportInboxService", "ReportIngestionReceipt", "ReportView",
     "FakeIndependentEvidenceVerifier", "HumanDecision", "HumanDecisionRequest",
     "IndependentEvidenceVerifier", "ReportGovernanceService", "VerificationResult",
-    "FakePythosAdapter",
+    "FakePythosAdapter", "ResumeWorkItemQuery", "ResumeWorkItemView",
+    "AcceptanceEvidence", "QualificationDossier", "build_qualification_dossier",
 ]
