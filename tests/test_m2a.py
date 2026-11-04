@@ -118,7 +118,7 @@ def test_05_authorized_m1_context_no_sensitive_history(workspace):
     assert brief.work_item_ref.id == workspace["work"].id
     assert brief.scope_id == "personal"
     assert "SECRET" not in data
-    assert "source_ref" not in data
+    assert '"classification":' not in data
     assert "PROJECT_VIEW" in data and "TASK_VIEW" in data
 
 
