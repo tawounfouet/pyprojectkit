@@ -1,4 +1,4 @@
-name: M1 Registry CI
+name: PyProjectKit M0-M2A CI
 on:
   push:
     branches: [main, 'feat/**']
@@ -26,6 +26,7 @@ jobs:
           python -m compileall -q src
           python -m pytest -q
           python examples/first_project.py
+          python examples/m2_authorized_brief_demo.py
           python -m pyprojectkit.m1.cli --help
           python -m pyprojectkit.m1.cli --demo --db /tmp/pyprojectkit-demo.sqlite init
           python -m pip wheel --no-deps -w dist .
@@ -33,7 +34,7 @@ jobs:
         run: |
           python -m venv .venv-wheel-smoke
           .venv-wheel-smoke/bin/python -m pip install --no-index --no-deps --find-links dist pyprojectkit
-          .venv-wheel-smoke/bin/python -c "import pyprojectkit; from pyprojectkit.m1 import SqliteDatabase, RegistryService; print('isolated import: OK')"
+          .venv-wheel-smoke/bin/python -c "import pyprojectkit; from pyprojectkit.m1 import SqliteDatabase, RegistryService; from pyprojectkit.m2 import OperatingBriefDTO, BuildAuthorizedOperatingBrief; print('isolated import: OK')"
           .venv-wheel-smoke/bin/python -m pyprojectkit.m1.cli --help
       - name: Strict static typing
         run: |
