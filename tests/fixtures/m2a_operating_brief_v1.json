@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "brief_id": "synthetic-brief-001",
+  "created_at": "2026-11-04T12:00:00+00:00",
+  "expires_at": "2026-11-04T12:20:00+00:00",
+  "projection_created_at": "2026-11-04T12:00:00+00:00",
+  "scope_id": "synthetic",
+  "project_id": "00000000-0000-0000-0000-000000000001",
+  "work_item_ref": {
+    "kind": "TASK",
+    "id": "00000000-0000-0000-0000-000000000002"
+  },
+  "mandate_id": "synthetic-mandate-001",
+  "mode": "AUDIT",
+  "authority_level": "A0",
+  "allowed_actions": [
+    "PROJECT_VIEW",
+    "TASK_VIEW"
+  ],
+  "problem": "Examiner une tâche fictive",
+  "expected_outcome": "Rapport de constats sans mutation",
+  "in_scope": [
+    "TASK:00000000-0000-0000-0000-000000000002"
+  ],
+  "out_of_scope": [
+    "MERGE",
+    "PUBLISH",
+    "DELETE",
+    "APPROVE"
+  ],
+  "target_reference": {
+    "source_type": "GIT_COMMIT",
+    "resource_ref": "synthetic/repository",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "source_watermark": "m1:task:synthetic:v1",
+  "acceptance_criteria": [
+    "Aucune mutation métier"
+  ],
+  "required_evidence": [
+    "Référence exacte"
+  ],
+  "human_decisions": [
+    "Approbation réservée à l'humain"
+  ],
+  "risks": [
+    "Fixture synthétique"
+  ],
+  "limitations": [
+    "Ne prouve pas une CI réelle"
+  ],
+  "next_safe_action": "Produire une analyse en lecture seule"
+}
