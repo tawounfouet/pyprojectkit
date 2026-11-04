@@ -9,7 +9,7 @@ from ..domain import AccessDenied, Conflict, InvalidValue, NotFound
 from ..m1 import HistoryRecord, SqliteUnitOfWork, VerifiedActor
 from ..ports import Clock
 from ..service import SystemClock
-from .inbox import ReportInboxService, _now
+from .inbox import ReportInboxService, ReportView, _now
 from .reports import ReportEvidenceRefDTO
 
 
@@ -34,7 +34,7 @@ class IndependentEvidenceVerifier(Protocol):
 
 class FakeIndependentEvidenceVerifier:
     """Source de tests indépendante du contenu du rapport."""
-    def __init__(self, results: dict[tuple[str, str, str], VerificationResult] | None = None):
+    def __init__(self, results: dict[tuple[str, str, str], VerificationResult] | None = None) -> None:
         self.results = dict(results or {})
 
     def verify(self, *, source_reference: ReportEvidenceRefDTO,
@@ -65,12 +65,12 @@ class HumanDecision:
 
 class ReportGovernanceService:
     """Commandes de gouvernance sans effet sur Project ou Task."""
-    def __init__(self, inbox: ReportInboxService, clock: Clock | None = None):
+    def __init__(self, inbox: ReportInboxService, clock: Clock | None = None) -> None:
         self.inbox = inbox
         self.registry = inbox.registry
         self.clock = clock or SystemClock()
 
-    def _report(self, actor: VerifiedActor, ingestion_id: str):
+    def _report(self, actor: VerifiedActor, ingestion_id: str) -> ReportView:
         return self.inbox.get_report(actor, ingestion_id)
 
 
