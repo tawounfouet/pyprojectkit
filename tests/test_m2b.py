@@ -26,7 +26,7 @@ PERMS = {
     "PROJECT_VIEW", "PROJECT_VIEW_ALL", "PROJECT_CREATE", "SCOPE_CREATE", "TASK_VIEW", "TASK_CREATE",
     "BRIEF_BUILD", "BRIEF_ISSUE", "REPORT_RECEIVE", "REPORT_READ",
     "WRITE_OBSERVATION", "WRITE_HANDOFF", "WRITE_EVIDENCE", "READ_OBSERVATION", "READ_EVIDENCE",
-    "VERIFY_REQUEST", "ASSESS", "WRITE_ASSESSMENT", "HUMAN_REQUEST",
+    "VERIFY_REQUEST", "ASSESS", "WRITE_ASSESSMENT", "READ_ASSESSMENT", "HUMAN_REQUEST",
     "HUMAN_DECIDE", "APPROVE", "WRITE_DECISION",
 }
 
@@ -203,8 +203,13 @@ def test_m2b_12_evidence_verification_does_not_approve(m2):
     assert request_id
     with m2["db"].connection() as conn:
         assert conn.execute("SELECT result FROM m2_verifications").fetchone()[0] == "PASS"
+        assert conn.execute("SELECT COUNT(*) FROM history WHERE kind='assessment'").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM history WHERE kind='approval'").fetchone()[0] == 0
         assert conn.execute("SELECT status FROM tasks WHERE id=?", (m2["task"],)).fetchone()[0] == "TODO"
+    assert m2["registry"].verify_status(
+        m2["actor"], m2["project"], target_ref="synthetic/repository",
+        revision=SHA, criterion="CI"
+    ) == "UNKNOWN"
 
 
 def test_m2b_13_unavailable_verifier_is_unknown(m2):
