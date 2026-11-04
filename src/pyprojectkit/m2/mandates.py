@@ -107,9 +107,12 @@ class MandateVerifier:
         mode: PythosMode,
         target_reference: ExactTargetReference,
         now: datetime,
+        operation_permission: str = "BRIEF_BUILD",
     ) -> DelegationMandate:
-        # La session et l'opération de construction sont vérifiées AVANT les lectures M1.
-        self.host.require(actor, "BRIEF_BUILD")
+        # Le cas d'usage choisit la permission, jamais le payload de l'agent.
+        if operation_permission not in {"BRIEF_BUILD", "REPORT_RECEIVE"}:
+            raise InvalidValue("Opération de mandat non prise en charge")
+        self.host.require(actor, operation_permission)
         if now.utcoffset() is None:
             raise InvalidValue("Horloge avec fuseau requise")
         try:
@@ -133,11 +136,12 @@ class MandateVerifier:
         return mandate
 
     def require_current(self, actor: VerifiedActor, previous: DelegationMandate,
-                        now: datetime) -> None:
+                        now: datetime, *, operation_permission: str = "BRIEF_BUILD") -> None:
         latest = self.require_authorized(
             actor, mandate_id=previous.mandate_id, project_id=previous.project_id,
             work_item_ref=previous.work_item_ref, mode=previous.mode,
             target_reference=previous.target_reference, now=now,
+            operation_permission=operation_permission,
         )
         if latest != previous:
             raise AccessDenied(_GENERIC_DENIAL)
