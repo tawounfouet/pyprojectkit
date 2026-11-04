@@ -23,7 +23,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[test]'
-          python -m compileall -q src
+          python -m compileall -q src examples
           python -m pytest -q
           python examples/first_project.py
           python examples/m2_authorized_brief_demo.py
@@ -41,4 +41,4 @@ jobs:
       - name: Strict static typing
         run: |
           python -m pip install "mypy>=1.12,<2"
-          python -m mypy --strict --python-version 3.12 src/pyprojectkit examples/first_project.py
+          python -m mypy --strict --python-version 3.12 src/pyprojectkit examples/first_project.py examples/m2c_pilots_demo.py
