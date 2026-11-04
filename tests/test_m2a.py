@@ -295,3 +295,36 @@ def test_21_mandate_suspended_before_read(workspace):
     workspace["store"].suspend(workspace["mandate"].mandate_id)
     with pytest.raises(AccessDenied):
         workspace["svc"].execute(workspace["alice"], workspace["req"])
+
+
+def test_22_explicit_same_scope_project_share_can_build(workspace):
+    # La visibilité inter-owner requiert un droit explicite sur ce projet exact.
+    pid = workspace["p1"]
+    host = TrustedHost({"shared": ("reader", {"personal": {
+        "PROJECT_VIEW", "TASK_VIEW", "BRIEF_BUILD", f"PROJECT_VIEW:{pid}"
+    }})})
+    reader = host.authenticate("shared", "personal")
+    registry = RegistryService(workspace["db"], host, FixedClock(NOW))
+    store = InMemoryMandateStore()
+    original = workspace["mandate"]
+    mandate = replace(original, mandate_id="shared-reader-mandate", actor_id="reader")
+    store.provision(mandate)
+    svc = BuildAuthorizedOperatingBrief(registry, MandateVerifier(host, store), FixedClock(NOW))
+    brief = svc.execute(reader, replace(workspace["req"], mandate_id=mandate.mandate_id))
+    assert brief.work_item_ref.id == workspace["work"].id
+    assert brief.scope_id == "personal"
+
+
+def test_23_expiration_during_projection_fails_closed(workspace, monkeypatch):
+    clock = FixedClock(NOW)
+    svc = BuildAuthorizedOperatingBrief(
+        workspace["registry"], MandateVerifier(workspace["host"], workspace["store"]), clock
+    )
+    original = workspace["registry"].list_tasks
+    def expire(*args, **kwargs):
+        result = original(*args, **kwargs)
+        clock.value = NOW + timedelta(hours=1)
+        return result
+    monkeypatch.setattr(workspace["registry"], "list_tasks", expire)
+    with pytest.raises(AccessDenied):
+        svc.execute(workspace["alice"], workspace["req"])
