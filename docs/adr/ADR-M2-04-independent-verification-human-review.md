@@ -12,7 +12,8 @@
 - Le service `ReportInboxService.receive` n'applique **aucune transition** M0, n'enregistre aucun `VerificationAssessment PASS` ni une approval.
 - `ReportGovernanceService.request_verification` exige `VERIFY_REQUEST`, `ASSESS`, `WRITE_ASSESSMENT`, accès à la preuve et `REPORT_READ`. Un `IndependentEvidenceVerifier` est appelé sur la référence et la révision **exactes**. `UNKNOWN` pour source indisponible, et `PASS` ne peut résulter d'une source déclarée indisponible.
 - `FakeIndependentEvidenceVerifier` est un **oracle déterministe provisionné hors du rapport**, utile pour les tests d'orchestration. Un PASS synthétique n'atteste aucune CI GitHub ou source réelle.
-- Le résultat de vérification et l'HistoryRecord M1 sont append-only et committés ensemble, sans changer les états de tâche/projet.
+- Le résultat technique du pilote est conservé dans `m2_verifications` et une **observation** M1 append-only. Il ne crée jamais un historique M1 `assessment PASS`, car `RegistryService.verify_status` interpréterait ce PASS comme qualifiant. L'intégration ultérieure d'un vérificateur réellement autoritatif exigera un nouveau contrat pour produire un `VerificationAssessment` M1 valide.
+- Résultat M2 et observation M1 sont committés ensemble, sans changer les états de tâche/projet.
 - `request_human_decision` crée uniquement `PENDING`; une commande séparée `decide_human_request` exige `HUMAN_DECIDE`, `APPROVE`, `WRITE_DECISION` et une identité différente du demandeur et du receveur du report.
 - La décision `APPROVED` est une **revue du report M2**, pas une publication, un merge, la clôture d'une Task ou le franchissement automatique du gate G5. Un record M1 `decision` est écrit, pas `approval` de publication.
 - Toute lecture reste conditionnée par `REPORT_READ`, `PROJECT_VIEW`, `TASK_VIEW`, scope/owner et `INTERNAL`.
