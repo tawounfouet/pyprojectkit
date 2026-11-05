@@ -206,46 +206,85 @@ class Task:
     version: int = 1
     blocked_reason: str | None = None
     actual_end_at: datetime | None = None
+    assignee_id: str | None = None
+    actual_start_at: datetime | None = None
+    progress: int = 0
 
     def __post_init__(self) -> None:
         _required(self.title, "title")
         if not isinstance(self.status, TaskStatus) or self.version < 1:
             raise InvalidValue("statut ou version de tâche invalide")
+        _aware(self.actual_start_at, "actual_start_at")
         _aware(self.actual_end_at, "actual_end_at")
+        if self.assignee_id is not None:
+            _required(self.assignee_id, "assignee_id")
+        if type(self.progress) is not int or not 0 <= self.progress <= 100:
+            raise InvalidValue("progress doit être un entier entre 0 et 100")
+        if (self.actual_end_at is not None and self.actual_start_at is not None
+                and self.actual_end_at < self.actual_start_at):
+            raise InvalidValue("fin de tâche antérieure au démarrage")
         if self.status == TaskStatus.BLOCKED:
             _required(self.blocked_reason or "", "blocked_reason")
         elif self.blocked_reason is not None:
             raise InvalidValue("une tâche non bloquée ne doit pas conserver de cause active")
-        if self.status == TaskStatus.DONE and self.actual_end_at is None:
-            raise InvalidValue("une tâche terminée exige une date de fin")
+        if self.status == TaskStatus.DONE and (self.actual_end_at is None or self.progress != 100):
+            raise InvalidValue("une tâche terminée exige date de fin et progression 100")
 
     def _transition(self, expected: tuple[TaskStatus, ...], target: TaskStatus, *,
-                    blocked_reason: str | None = None, end_at: datetime | None = None) -> Task:
+                    blocked_reason: str | None = None, start_at: datetime | None = None,
+                    end_at: datetime | None = None, progress: int | None = None) -> Task:
         if self.status not in expected:
             raise InvalidStateTransition(f"transition {self.status.value} vers {target.value} interdite")
         return replace(self, status=target, version=self.version + 1,
                        blocked_reason=blocked_reason,
-                       actual_end_at=end_at if end_at is not None else self.actual_end_at)
+                       actual_start_at=(start_at if self.actual_start_at is None and start_at is not None
+                                        else self.actual_start_at),
+                       actual_end_at=end_at if end_at is not None else self.actual_end_at,
+                       progress=progress if progress is not None else self.progress)
+
+    def assign(self, assignee_id: str) -> Task:
+        if self.status in {TaskStatus.DONE, TaskStatus.CANCELLED}:
+            raise InvalidStateTransition("affectation interdite sur une tâche terminale")
+        _required(assignee_id, "assignee_id")
+        if assignee_id == self.assignee_id:
+            raise Conflict("affectation inchangée")
+        return replace(self, assignee_id=assignee_id, version=self.version + 1)
+
+    def set_progress(self, progress: int) -> Task:
+        if self.status not in {TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW}:
+            raise InvalidStateTransition("progression réservée à une tâche démarrée ou en revue")
+        if type(progress) is not int or not 0 <= progress <= 100:
+            raise InvalidValue("progress doit être un entier entre 0 et 100")
+        if progress == self.progress:
+            raise Conflict("progression inchangée")
+        return replace(self, progress=progress, version=self.version + 1)
 
     def ready(self) -> Task:
         return self._transition((TaskStatus.TODO,), TaskStatus.READY)
 
-    def start(self) -> Task:
-        return self._transition((TaskStatus.READY,), TaskStatus.IN_PROGRESS)
+    def start(self, at: datetime | None = None) -> Task:
+        _aware(at, "at")
+        return self._transition((TaskStatus.READY,), TaskStatus.IN_PROGRESS, start_at=at)
 
     def block(self, reason: str) -> Task:
         _required(reason, "reason")
         return self._transition((TaskStatus.IN_PROGRESS,), TaskStatus.BLOCKED, blocked_reason=reason)
 
-    def unblock(self) -> Task:
-        return self._transition((TaskStatus.BLOCKED,), TaskStatus.IN_PROGRESS, blocked_reason=None)
+    def unblock(self, at: datetime | None = None) -> Task:
+        _aware(at, "at")
+        return self._transition((TaskStatus.BLOCKED,), TaskStatus.IN_PROGRESS,
+                                blocked_reason=None, start_at=at)
 
     def submit_review(self) -> Task:
         return self._transition((TaskStatus.IN_PROGRESS,), TaskStatus.IN_REVIEW)
 
+    def return_to_work(self) -> Task:
+        return self._transition((TaskStatus.IN_REVIEW,), TaskStatus.IN_PROGRESS)
+
     def complete(self, at: datetime) -> Task:
         _aware(at, "at")
-        return self._transition((TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW), TaskStatus.DONE, end_at=at)
+        return self._transition((TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW), TaskStatus.DONE,
+                                end_at=at, progress=100)
 
     def cancel(self) -> Task:
         if self.status in {TaskStatus.DONE, TaskStatus.CANCELLED}:

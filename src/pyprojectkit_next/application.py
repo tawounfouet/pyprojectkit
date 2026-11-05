@@ -157,6 +157,30 @@ class ProjectService:
             uow.commit()
             return task
 
+    def assign_task(self, actor: ActorContext, id: TaskId, assignee_id: str) -> Task:
+        with self._uow_factory() as uow:
+            task = uow.get_task(id)
+            project = self._project(uow, actor, task.project_id, "task:write")
+            if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+                raise InvalidStateTransition("projet terminal")
+            updated = task.assign(assignee_id)
+            uow.save_task(updated)
+            uow.record(self._event("TaskAssigned", id.value, updated.version, actor))
+            uow.commit()
+            return updated
+
+    def update_task_progress(self, actor: ActorContext, id: TaskId, progress: int) -> Task:
+        with self._uow_factory() as uow:
+            task = uow.get_task(id)
+            project = self._project(uow, actor, task.project_id, "task:write")
+            if project.status != ProjectStatus.ACTIVE:
+                raise InvalidStateTransition("progression exige un projet actif")
+            updated = task.set_progress(progress)
+            uow.save_task(updated)
+            uow.record(self._event("TaskProgressUpdated", id.value, updated.version, actor))
+            uow.commit()
+            return updated
+
     def add_dependency(self, actor: ActorContext, successor: TaskId, predecessor: TaskId) -> Dependency:
         with self._uow_factory() as uow:
             child = uow.get_task(successor)
@@ -210,16 +234,21 @@ class ProjectService:
                 if project.status != ProjectStatus.ACTIVE:
                     raise InvalidStateTransition("le projet doit être actif")
                 self._check_predecessors(uow, task)
-                updated = task.start()
+                updated = task.start(self._clock.now())
             elif command == "block":
                 updated = task.block(reason or "")
             elif command == "unblock":
                 if project.status != ProjectStatus.ACTIVE:
                     raise InvalidStateTransition("le projet doit être actif")
                 self._check_predecessors(uow, task)
-                updated = task.unblock()
+                updated = task.unblock(self._clock.now())
             elif command == "review":
                 updated = task.submit_review()
+            elif command == "return":
+                if project.status != ProjectStatus.ACTIVE:
+                    raise InvalidStateTransition("le projet doit être actif")
+                self._check_predecessors(uow, task)
+                updated = task.return_to_work()
             elif command == "complete":
                 updated = task.complete(self._clock.now())
             elif command == "cancel":
@@ -229,7 +258,7 @@ class ProjectService:
             uow.save_task(updated)
             names = {"ready": "TaskReady", "start": "TaskStarted", "block": "TaskBlocked",
                      "unblock": "TaskUnblocked", "review": "TaskSubmittedForReview",
-                     "complete": "TaskCompleted", "cancel": "TaskCancelled"}
+                     "return": "TaskReturnedToWork", "complete": "TaskCompleted", "cancel": "TaskCancelled"}
             uow.record(self._event(names[command], id.value, updated.version, actor))
             uow.commit()
             return updated
@@ -248,6 +277,9 @@ class ProjectService:
 
     def submit_task_review(self, actor: ActorContext, id: TaskId) -> Task:
         return self._change_task(actor, id, "review")
+
+    def return_task_to_work(self, actor: ActorContext, id: TaskId) -> Task:
+        return self._change_task(actor, id, "return")
 
     def complete_task(self, actor: ActorContext, id: TaskId) -> Task:
         return self._change_task(actor, id, "complete")
