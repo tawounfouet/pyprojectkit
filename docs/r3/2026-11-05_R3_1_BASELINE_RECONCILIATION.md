@@ -8,6 +8,8 @@
 > Portée : synthétique / locale pour les garanties M1/M2 ; aucune autorisation de données réelles ni de production  
 > Cadre : R3.1 avant tout arbitrage R3.2 ou implémentation M3-A
 
+> **Addendum de clôture technique R3.1 (cadrage uniquement)** : les arbitrages de précédence documentaire, la sortie avec réserves et l'autorité de décision sont consignés dans [le registre R3.1](2026-11-05_R3_1_ARBITRATION_AND_LIMITED_CLOSEOUT.md). Le texte 27 manque toujours, mais son illustration n'est pas normative et le catalogue d'IDs M3 du document 26 reste la référence de travail. R3.1 est **terminé en branche pour la préparation en lecture seule de R3.2**, pas approuvé pour fusion, release ou M3. Les gates #19/#20 restent ouverts.
+
 ## 0. Décision de méthode
 
 L'existant doit être stabilisé par une **baseline traçable**, sans refonte générale du domaine, sans migrations nouvelles et sans promesse de portabilité non démontrée. Ce dossier enregistre l'état des lieux, les écarts documentaires et les garde-fous. Il ne modifie aucune règle métier.
@@ -84,7 +86,7 @@ Une documentation descriptive en retard ne doit pas rétrograder un code déjà 
 | R31-02 | P0 | Gate Q-M2 indépendant absent ; AC-031/034 partiels ; ADR M2 non signés | Examen humain, risques/exclusions, verdict séparé | `OPEN / #20` |
 | R31-03 | P0 doc | `docs/ROADMAP_TRACKING.md` commence par `M0 NOT_STARTED` | Préserver historique et ajouter un addendum vérifié daté | `IN_PR` |
 | R31-04 | P1 doc | README décrit prototype M0/M1 et 41 tests ; `pyproject.toml` décrit M0/M1 | Émettre correction descriptive ciblée (non versionnage automatique) | `OPEN` |
-| R31-05 | P0 plan | Document 26 et illustration 27 utilisent les mêmes IDs M3-01..06 différemment | Matrice 26/27, pas de tickets M3 créés avant arbitrage | `IN_PR / BLOCKED_SOURCE_27` |
+| R31-05 | P0 plan | Document 26 et illustration 27 utilisent les mêmes IDs M3-01..06 différemment | Préférence conservatrice pour les IDs du 26 ; texte 27 non disponible | `DECIDED_PRECEDENCE / EXCEPTION_27` |
 | R31-06 | P1 | `RegistryService` et plusieurs services M2 manipulent SQLite directement | Audit des ports et contrats lors de R3.2/M3-A, pas de refactor R3.1 | `DEFERRED_TO_R3_2` |
 | R31-07 | P1 | `requires-python >=3.12`, CI limitée à 3.12/3.13 | Décider matrice de compatibilité et politique futures versions | `OPEN` |
 | R31-08 | P1 | Licence absente et politique d'exploitation non qualifiée | Conserver blocage release, suivre [#13](https://github.com/tawounfouet/pyprojectkit/issues/13) | `OPEN` |
@@ -120,16 +122,16 @@ La priorité P0 d'un écart documentaire indique un blocage de la traçabilité,
 |---|---|
 | Baseline SHA, CI, structure, version et limites | `DOCUMENTED` |
 | Décalage roadmap et documentation | `DOCUMENTED / ADDENDUM_PROPOSED` |
-| Crosswalk 26/27 et différences de planification | `DOCUMENTED_PARTIAL`, illustration 27 seule |
+| Crosswalk 26/27 et différences de planification | `PRECEDENCE_DECIDED`, provenance 27 partielle sous réserve |
 | Liste des décisions et autorités | `DOCUMENTED / GATES_PENDING` |
 | Matrice de garanties M0/M1/M2 | `DOCUMENTED`, CI antérieure utilisée |
 | Refactor ou migration de code | `NOT_EXECUTED_BY_DESIGN` |
-| Revue / adoption humaine | `PENDING` |
-| Mise à jour du README et de `pyproject.toml` | `PENDING_SEPARATE_DOC_PR` |
+| Revue / adoption humaine | `PENDING` ; le mandat opérationnel n'est pas une review indépendante |
+| Mise à jour du README et de `pyproject.toml` | README mis à jour dans la PR ; description pyproject.toml historique à traiter avant publication |
 
 ## 8. Critère de sortie R3.1
 
-R3.1 ne peut être déclaré `CLOSED` que lorsque :
+La **clôture de l'exécution documentaire R3.1** est permise avec les exceptions et restrictions décrites dans le registre d'arbitrage. La **clôture organisationnelle / intégration sur main** nécessite encore :
 - les documents de baseline et crosswalk sont approuvés ;
 - `docs/ROADMAP_TRACKING.md` ne présente plus un historique comme statut présent ;
 - la source intégrale de 27 est obtenue et les collisions d'IDs sont arbitrées, ou l'incertitude est formellement enregistrée avec un propriétaire ;
@@ -137,6 +139,8 @@ R3.1 ne peut être déclaré `CLOSED` que lorsque :
 - les tests de non-régression sont conservés au SHA qui fera l'objet de la revue.
 
 **Verdict à la création :** `R3_1 = PARTIAL / REVIEW_REQUIRED` ; `M3_IMPLEMENTATION = NOT_STARTED` ; `MAIN_MUTATION = NONE` ; `Q_M2 = HUMAN_PENDING`.
+
+**Verdict actualisé après arbitrage délégué :** `R3_1_DOCUMENTARY_EXECUTION = COMPLETE_ON_BRANCH_WITH_EXCEPTIONS`, `R3_1_ADOPTION = PENDING_HUMAN_REVIEW`, `M3_IMPLEMENTATION = NOT_AUTHORIZED`. Voir [registre d'arbitrage](2026-11-05_R3_1_ARBITRATION_AND_LIMITED_CLOSEOUT.md).
 
 ## 9. Suites
 
@@ -153,4 +157,5 @@ R3.1 ne peut être déclaré `CLOSED` que lorsque :
 - [Issue #13 : release hardening](https://github.com/tawounfouet/pyprojectkit/issues/13)
 - Plan 26 M3 : texte intégral fourni dans le projet ChatGPT, non importé dans `main` au contrôle du 2026-11-05.
 - [Crosswalk R3.1](2026-11-05_R3_1_M3_26_27_CROSSWALK.md)
+- [Arbitrage et clôture R3.1 à portée limitée](2026-11-05_R3_1_ARBITRATION_AND_LIMITED_CLOSEOUT.md)
 - [Contrat de non-régression M0/M1/M2](2026-11-05_R3_1_NON_REGRESSION_CONTRACT.md)
