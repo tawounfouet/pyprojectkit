@@ -1,0 +1,38 @@
+name: Legacy G1 - ephemeral restore precheck
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/legacy-g1-restore-drill.yml'
+      - 'scripts/g1_legacy_restore_drill.py'
+      - 'tests/test_g1_legacy_restore_drill.py'
+      - 'docs/legacy/G1_RESTORE_DRILL_READINESS.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/legacy-g1-restore-drill.yml'
+      - 'scripts/g1_legacy_restore_drill.py'
+      - 'tests/test_g1_legacy_restore_drill.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g1-precheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Test local restore tool using synthetic git repositories
+        run: |
+          python -m pip install 'pytest>=8,<10'
+          python -m pytest -q tests/test_g1_legacy_restore_drill.py
+      - name: Verify historical reference restores in isolated clone
+        run: |
+          python scripts/g1_legacy_restore_drill.py --repository . --baseline-sha a523d9c61c30ef41afe3bc9cf0723beafe3c2d38
+      # Important : aucune étape upload-artifact ni push du bundle / des secrets.
