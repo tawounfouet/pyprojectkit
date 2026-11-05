@@ -1,0 +1,128 @@
+"""Adaptateur InMemory : snapshot isolé, commit atomique et conflit optimiste."""
+from __future__ import annotations
+
+from threading import RLock
+
+from .domain import Conflict, DomainEvent, NotFound, Project, ProjectId, Task, TaskId
+
+
+class InMemoryDatabase:
+    """Prototype mono-processus. Les événements sont un journal local, pas une outbox."""
+    def __init__(self) -> None:
+        self._lock = RLock()
+        self._revision = 0
+        self._projects: dict[ProjectId, Project] = {}
+        self._tasks: dict[TaskId, Task] = {}
+        self._events: tuple[DomainEvent, ...] = ()
+
+    @property
+    def events(self) -> tuple[DomainEvent, ...]:
+        with self._lock:
+            return self._events
+
+    def unit_of_work(self) -> InMemoryUnitOfWork:
+        return InMemoryUnitOfWork(self)
+
+
+class InMemoryUnitOfWork:
+    def __init__(self, db: InMemoryDatabase) -> None:
+        self._db = db
+        self._open = False
+        self._baseline = -1
+        self._projects: dict[ProjectId, Project] = {}
+        self._tasks: dict[TaskId, Task] = {}
+        self._pending: list[DomainEvent] = []
+        self._dirty = False
+
+    def __enter__(self) -> InMemoryUnitOfWork:
+        if self._open:
+            raise Conflict("la transaction est déjà ouverte")
+        with self._db._lock:
+            self._baseline = self._db._revision
+            self._projects = self._db._projects.copy()
+            self._tasks = self._db._tasks.copy()
+        self._open = True
+        self._dirty = False
+        self._pending = []
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        self._open = False
+        self._projects.clear()
+        self._tasks.clear()
+        self._pending.clear()
+
+    def _require_open(self) -> None:
+        if not self._open:
+            raise Conflict("transaction inactive")
+
+    def get_project(self, id: ProjectId) -> Project:
+        self._require_open()
+        try:
+            return self._projects[id]
+        except KeyError as ex:
+            raise NotFound("projet introuvable") from ex
+
+    def get_task(self, id: TaskId) -> Task:
+        self._require_open()
+        try:
+            return self._tasks[id]
+        except KeyError as ex:
+            raise NotFound("tâche introuvable") from ex
+
+    def list_tasks(self, project_id: ProjectId) -> tuple[Task, ...]:
+        self._require_open()
+        return tuple(t for t in self._tasks.values() if t.project_id == project_id)
+
+    def add_project(self, project: Project) -> None:
+        self._require_open()
+        if project.id in self._projects:
+            raise Conflict("identifiant de projet déjà utilisé")
+        self._projects[project.id] = project
+        self._dirty = True
+
+    def save_project(self, project: Project) -> None:
+        self._require_open()
+        old = self.get_project(project.id)
+        if old.version + 1 != project.version:
+            raise Conflict("version de projet invalide")
+        self._projects[project.id] = project
+        self._dirty = True
+
+    def add_task(self, task: Task) -> None:
+        self._require_open()
+        self.get_project(task.project_id)
+        if task.id in self._tasks:
+            raise Conflict("identifiant de tâche déjà utilisé")
+        self._tasks[task.id] = task
+        self._dirty = True
+
+    def save_task(self, task: Task) -> None:
+        self._require_open()
+        old = self.get_task(task.id)
+        if old.project_id != task.project_id or old.version + 1 != task.version:
+            raise Conflict("version ou appartenance de tâche invalide")
+        self._tasks[task.id] = task
+        self._dirty = True
+
+    def record(self, event: DomainEvent) -> None:
+        self._require_open()
+        self._pending.append(event)
+
+    def commit(self) -> tuple[DomainEvent, ...]:
+        self._require_open()
+        try:
+            if self._pending and not self._dirty:
+                raise Conflict("événement sans mutation")
+            with self._db._lock:
+                if self._db._revision != self._baseline:
+                    raise Conflict("état modifié par une transaction concurrente")
+                if self._dirty:
+                    self._db._projects = self._projects.copy()
+                    self._db._tasks = self._tasks.copy()
+                    self._db._events = self._db._events + tuple(self._pending)
+                    self._db._revision += 1
+                return tuple(self._pending)
+        finally:
+            self._open = False
+            self._pending.clear()
