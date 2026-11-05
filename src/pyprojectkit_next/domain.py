@@ -1,8 +1,9 @@
 """Noyau expérimental VS-REBOOT-01 - valeurs et transitions pures (sans I/O)."""
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 
 
@@ -35,6 +36,10 @@ class ClosureBlocked(DomainError):
     code = "CLOSURE_BLOCKED"
 
 
+class DependencyViolation(DomainError):
+    code = "DEPENDENCY_VIOLATION"
+
+
 def _required(value: str, field: str) -> None:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
         raise InvalidValue(f"{field} doit être une chaîne non vide sans bordures blanches")
@@ -59,6 +64,34 @@ class TaskId:
 
     def __post_init__(self) -> None:
         _required(self.value, "TaskId")
+
+
+@dataclass(frozen=True, slots=True)
+class MilestoneId:
+    value: str
+
+    def __post_init__(self) -> None:
+        _required(self.value, "MilestoneId")
+
+
+@dataclass(frozen=True, slots=True)
+class Milestone:
+    id: MilestoneId
+    name: str
+    target_date: date
+    reached_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        _required(self.name, "milestone.name")
+        if not isinstance(self.target_date, date) or isinstance(self.target_date, datetime):
+            raise InvalidValue("target_date doit être une date civile")
+        _aware(self.reached_at, "reached_at")
+
+    def reach(self, at: datetime) -> Milestone:
+        _aware(at, "at")
+        if self.reached_at is not None:
+            raise InvalidStateTransition("jalon déjà atteint")
+        return replace(self, reached_at=at)
 
 
 class ProjectStatus(str, Enum):
@@ -90,6 +123,7 @@ class Project:
     version: int = 1
     actual_start_at: datetime | None = None
     actual_end_at: datetime | None = None
+    milestones: tuple[Milestone, ...] = ()
 
     def __post_init__(self) -> None:
         _required(self.name, "name")
@@ -99,6 +133,10 @@ class Project:
             raise InvalidValue("statut ou version de projet invalide")
         _aware(self.actual_start_at, "actual_start_at")
         _aware(self.actual_end_at, "actual_end_at")
+        if any(not isinstance(m, Milestone) for m in self.milestones):
+            raise InvalidValue("liste de jalons non conforme")
+        if len({m.id for m in self.milestones}) != len(self.milestones):
+            raise Conflict("identifiants de jalons dupliqués")
         if self.status in {ProjectStatus.ACTIVE, ProjectStatus.ON_HOLD, ProjectStatus.COMPLETED} and self.actual_start_at is None:
             raise InvalidValue("un projet démarré exige une date de démarrage")
         if self.status == ProjectStatus.COMPLETED and self.actual_end_at is None:
@@ -113,6 +151,28 @@ class Project:
         return replace(self, status=target, version=self.version + 1,
                        actual_start_at=start_at if start_at is not None else self.actual_start_at,
                        actual_end_at=end_at if end_at is not None else self.actual_end_at)
+
+    def add_milestone(self, milestone: Milestone) -> Project:
+        if self.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+            raise InvalidStateTransition("projet terminal")
+        if any(m.id == milestone.id for m in self.milestones):
+            raise Conflict("jalon déjà présent")
+        return replace(self, milestones=self.milestones + (milestone,), version=self.version + 1)
+
+    def get_milestone(self, milestone_id: MilestoneId) -> Milestone:
+        for milestone in self.milestones:
+            if milestone.id == milestone_id:
+                return milestone
+        raise NotFound("jalon introuvable")
+
+    def reach_milestone(self, milestone_id: MilestoneId, at: datetime) -> Project:
+        if self.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+            raise InvalidStateTransition("projet terminal")
+        milestone = self.get_milestone(milestone_id)
+        reached = milestone.reach(at)
+        return replace(self,
+                       milestones=tuple(reached if m.id == milestone_id else m for m in self.milestones),
+                       version=self.version + 1)
 
     def plan(self) -> Project:
         return self._transition(ProjectStatus.DRAFT, ProjectStatus.PLANNED)
@@ -191,6 +251,40 @@ class Task:
         if self.status in {TaskStatus.DONE, TaskStatus.CANCELLED}:
             raise InvalidStateTransition("une tâche terminale ne peut être annulée à nouveau")
         return replace(self, status=TaskStatus.CANCELLED, version=self.version + 1, blocked_reason=None)
+
+
+@dataclass(frozen=True, slots=True)
+class Dependency:
+    """Orientation : successor dépend de predecessor."""
+    successor: TaskId
+    predecessor: TaskId
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.successor, TaskId) or not isinstance(self.predecessor, TaskId):
+            raise InvalidValue("identifiants de dépendance invalides")
+        if self.successor == self.predecessor:
+            raise DependencyViolation("auto-dépendance interdite")
+
+
+def assert_acyclic(edges: frozenset[Dependency] | set[Dependency]) -> None:
+    """Kahn itératif : O(V+E), sans profondeur de récursion bornante."""
+    successors: dict[TaskId, set[TaskId]] = {}
+    prerequisites: dict[TaskId, int] = {}
+    for edge in edges:
+        successors.setdefault(edge.predecessor, set()).add(edge.successor)
+        prerequisites.setdefault(edge.predecessor, 0)
+        prerequisites[edge.successor] = prerequisites.get(edge.successor, 0) + 1
+    frontier = deque(node for node, count in prerequisites.items() if count == 0)
+    visited = 0
+    while frontier:
+        node = frontier.popleft()
+        visited += 1
+        for successor in successors.get(node, ()):
+            prerequisites[successor] -= 1
+            if prerequisites[successor] == 0:
+                frontier.append(successor)
+    if visited != len(prerequisites):
+        raise DependencyViolation("cycle de dépendances interdit")
 
 
 @dataclass(frozen=True, slots=True)

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from pyprojectkit_next import (
-    AccessDenied, ActorContext, ClosureBlocked, Conflict, DomainEvent,
+    AccessDenied, ActorContext, ClosureBlocked, Conflict, DomainEvent, MilestoneId,
     InMemoryDatabase, InvalidStateTransition, InvalidValue, NotFound,
     OwnerScopePolicy, Project, ProjectId, ProjectService, ProjectStatus,
     Task, TaskId, TaskStatus,
@@ -26,6 +26,7 @@ class CountingIds:
     def __init__(self) -> None:
         self.p = 0
         self.t = 0
+        self.m = 0
 
     def project_id(self) -> ProjectId:
         self.p += 1
@@ -34,6 +35,10 @@ class CountingIds:
     def task_id(self) -> TaskId:
         self.t += 1
         return TaskId(f"T-{self.t}")
+
+    def milestone_id(self) -> MilestoneId:
+        self.m += 1
+        return MilestoneId(f"M-{self.m}")
 
 
 @pytest.fixture

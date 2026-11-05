@@ -1,11 +1,12 @@
 """Use cases M0 bornés du VS-REBOOT-01, indépendant de M1/M2."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
 from .domain import (
-    AccessDenied, ClosureBlocked, DomainEvent, InvalidStateTransition, InvalidValue,
+    AccessDenied, ClosureBlocked, Dependency, DependencyViolation, DomainEvent,
+    InvalidStateTransition, InvalidValue, Milestone, MilestoneId,
     Project, ProjectId, ProjectStatus, Task, TaskId, TaskStatus,
 )
 from .ports import ActorContext, AuthorizationPolicy, Clock, IdFactory, UnitOfWork, UnitOfWorkFactory
@@ -23,10 +24,14 @@ class UUIDFactory:
     def task_id(self) -> TaskId:
         return TaskId(str(uuid4()))
 
+    def milestone_id(self) -> MilestoneId:
+        return MilestoneId(str(uuid4()))
+
 
 class OwnerScopePolicy:
     """Policy minimale fail-closed : actor fourni par hôte fiable uniquement."""
-    _actions = frozenset({"project:create", "project:read", "project:write", "task:read", "task:write"})
+    _actions = frozenset({"project:create", "project:read", "project:write",
+                          "task:read", "task:write", "milestone:read", "milestone:write"})
 
     def require(self, actor: ActorContext, action: str, *, scope: str, owner_id: str) -> None:
         if (action not in self._actions or not actor.subject_id or
@@ -111,6 +116,36 @@ class ProjectService:
     def cancel_project(self, actor: ActorContext, id: ProjectId) -> Project:
         return self._change_project(actor, id, "cancel")
 
+    def add_milestone(self, actor: ActorContext, project_id: ProjectId,
+                      name: str, target_date: date) -> Milestone:
+        with self._uow_factory() as uow:
+            project = self._project(uow, actor, project_id, "milestone:write")
+            milestone = Milestone(self._ids.milestone_id(), name, target_date)
+            updated = project.add_milestone(milestone)
+            uow.save_project(updated)
+            uow.record(self._event("MilestoneCreated", milestone.id.value, updated.version, actor))
+            uow.commit()
+            return milestone
+
+    def reach_milestone(self, actor: ActorContext, project_id: ProjectId,
+                        milestone_id: MilestoneId) -> Milestone:
+        with self._uow_factory() as uow:
+            project = self._project(uow, actor, project_id, "milestone:write")
+            updated = project.reach_milestone(milestone_id, self._clock.now())
+            uow.save_project(updated)
+            uow.record(self._event("MilestoneReached", milestone_id.value, updated.version, actor))
+            uow.commit()
+            return updated.get_milestone(milestone_id)
+
+    def get_milestone(self, actor: ActorContext, project_id: ProjectId,
+                      milestone_id: MilestoneId) -> Milestone:
+        with self._uow_factory() as uow:
+            return self._project(uow, actor, project_id, "milestone:read").get_milestone(milestone_id)
+
+    def list_milestones(self, actor: ActorContext, project_id: ProjectId) -> tuple[Milestone, ...]:
+        with self._uow_factory() as uow:
+            return self._project(uow, actor, project_id, "milestone:read").milestones
+
     def create_task(self, actor: ActorContext, project_id: ProjectId, title: str) -> Task:
         with self._uow_factory() as uow:
             project = self._project(uow, actor, project_id, "task:write")
@@ -121,6 +156,35 @@ class ProjectService:
             uow.record(self._event("TaskCreated", task.id.value, task.version, actor))
             uow.commit()
             return task
+
+    def add_dependency(self, actor: ActorContext, successor: TaskId, predecessor: TaskId) -> Dependency:
+        with self._uow_factory() as uow:
+            child = uow.get_task(successor)
+            parent = uow.get_task(predecessor)
+            project = self._project(uow, actor, child.project_id, "task:write")
+            self._project(uow, actor, parent.project_id, "task:write")
+            if child.project_id != parent.project_id:
+                raise DependencyViolation("dépendance inter-projets interdite")
+            if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+                raise InvalidStateTransition("projet terminal")
+            if child.status in {TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW, TaskStatus.DONE} and parent.status != TaskStatus.DONE:
+                raise DependencyViolation("ne pas rendre une tâche en cours incohérente")
+            edge = Dependency(successor, predecessor)
+            uow.add_dependency(project.id, edge)
+            uow.record(self._event("TaskDependencyAdded", successor.value, child.version, actor))
+            uow.commit()
+            return edge
+
+    def list_dependencies(self, actor: ActorContext, project_id: ProjectId) -> tuple[Dependency, ...]:
+        with self._uow_factory() as uow:
+            self._project(uow, actor, project_id, "task:read")
+            return uow.list_dependencies(project_id)
+
+    @staticmethod
+    def _check_predecessors(uow: UnitOfWork, task: Task) -> None:
+        for edge in uow.list_dependencies(task.project_id):
+            if edge.successor == task.id and uow.get_task(edge.predecessor).status != TaskStatus.DONE:
+                raise DependencyViolation("prérequis non terminé")
 
     def get_task(self, actor: ActorContext, id: TaskId) -> Task:
         with self._uow_factory() as uow:
@@ -145,10 +209,14 @@ class ProjectService:
             elif command == "start":
                 if project.status != ProjectStatus.ACTIVE:
                     raise InvalidStateTransition("le projet doit être actif")
+                self._check_predecessors(uow, task)
                 updated = task.start()
             elif command == "block":
                 updated = task.block(reason or "")
             elif command == "unblock":
+                if project.status != ProjectStatus.ACTIVE:
+                    raise InvalidStateTransition("le projet doit être actif")
+                self._check_predecessors(uow, task)
                 updated = task.unblock()
             elif command == "review":
                 updated = task.submit_review()

@@ -3,7 +3,10 @@ from __future__ import annotations
 
 from threading import RLock
 
-from .domain import Conflict, DomainEvent, NotFound, Project, ProjectId, Task, TaskId
+from .domain import (
+    Conflict, Dependency, DependencyViolation, DomainEvent, NotFound,
+    Project, ProjectId, ProjectStatus, Task, TaskId, assert_acyclic,
+)
 
 
 class InMemoryDatabase:
@@ -13,6 +16,7 @@ class InMemoryDatabase:
         self._revision = 0
         self._projects: dict[ProjectId, Project] = {}
         self._tasks: dict[TaskId, Task] = {}
+        self._dependencies: dict[ProjectId, frozenset[Dependency]] = {}
         self._events: tuple[DomainEvent, ...] = ()
 
     @property
@@ -31,6 +35,7 @@ class InMemoryUnitOfWork:
         self._baseline = -1
         self._projects: dict[ProjectId, Project] = {}
         self._tasks: dict[TaskId, Task] = {}
+        self._dependencies: dict[ProjectId, frozenset[Dependency]] = {}
         self._pending: list[DomainEvent] = []
         self._dirty = False
 
@@ -41,6 +46,7 @@ class InMemoryUnitOfWork:
             self._baseline = self._db._revision
             self._projects = self._db._projects.copy()
             self._tasks = self._db._tasks.copy()
+            self._dependencies = self._db._dependencies.copy()
         self._open = True
         self._dirty = False
         self._pending = []
@@ -50,6 +56,7 @@ class InMemoryUnitOfWork:
         self._open = False
         self._projects.clear()
         self._tasks.clear()
+        self._dependencies.clear()
         self._pending.clear()
 
     def _require_open(self) -> None:
@@ -73,6 +80,29 @@ class InMemoryUnitOfWork:
     def list_tasks(self, project_id: ProjectId) -> tuple[Task, ...]:
         self._require_open()
         return tuple(t for t in self._tasks.values() if t.project_id == project_id)
+
+    def list_dependencies(self, project_id: ProjectId) -> tuple[Dependency, ...]:
+        self._require_open()
+        self.get_project(project_id)
+        edges = self._dependencies.get(project_id, frozenset())
+        return tuple(sorted(edges, key=lambda e: (e.successor.value, e.predecessor.value)))
+
+    def add_dependency(self, project_id: ProjectId, edge: Dependency) -> None:
+        self._require_open()
+        project = self.get_project(project_id)
+        if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+            raise DependencyViolation("projet terminal")
+        child = self.get_task(edge.successor)
+        predecessor = self.get_task(edge.predecessor)
+        if child.project_id != project_id or predecessor.project_id != project_id:
+            raise DependencyViolation("dépendance inter-projets interdite")
+        current = self._dependencies.get(project_id, frozenset())
+        if edge in current:
+            raise Conflict("dépendance déjà présente")
+        updated = current | {edge}
+        assert_acyclic(updated)
+        self._dependencies[project_id] = frozenset(updated)
+        self._dirty = True
 
     def add_project(self, project: Project) -> None:
         self._require_open()
@@ -120,6 +150,7 @@ class InMemoryUnitOfWork:
                 if self._dirty:
                     self._db._projects = self._projects.copy()
                     self._db._tasks = self._tasks.copy()
+                    self._db._dependencies = self._dependencies.copy()
                     self._db._events = self._db._events + tuple(self._pending)
                     self._db._revision += 1
                 return tuple(self._pending)
