@@ -5,8 +5,8 @@
 > `main@a523d9c61c30ef41afe3bc9cf0723beafe3c2d38` contient M0/M1 et M2-A/B/C fusionnés via PR #16/#17/#18.  
 > [CI post-merge](https://github.com/tawounfouet/pyprojectkit/actions/runs/41919258680) : **168 tests PASS par Python 3.12/3.13**, `mypy --strict`, build/wheel isolée PASS, sur pilote local synthétique.  
 > **La protection de main est absente** ([#19](https://github.com/tawounfouet/pyprojectkit/issues/19)) et **Q-M2 reste HUMAN_GATE_PENDING**, avec AC-031/AC-034 PARTIAL ([#20](https://github.com/tawounfouet/pyprojectkit/issues/20)).  
-> M3 est `PROPOSED/NOT_IMPLEMENTED`; la collision des WorkItems des plans 26/27 est en revue.  
-> Consulter [l'audit R3.1](r3/2026-11-05_R3_1_BASELINE_RECONCILIATION.md) et [la matrice 26/27](r3/2026-11-05_R3_1_M3_26_27_CROSSWALK.md).  
+> M3 est `PROPOSED/NOT_IMPLEMENTED`. Pour R3.1, le plan 26 conserve ses IDs de référence ; le plan 27 n'est connu que par son illustration et reste non normatif. La PR R3.1 attend la revue humaine.  
+> Consulter [l'audit R3.1](r3/2026-11-05_R3_1_BASELINE_RECONCILIATION.md), [la matrice 26/27](r3/2026-11-05_R3_1_M3_26_27_CROSSWALK.md) et [la décision de clôture limitée](r3/2026-11-05_R3_1_ARBITRATION_AND_LIMITED_CLOSEOUT.md).  
 > Cet addendum **ne signe aucun gate** et **ne réécrit pas l'historique**.
 
 ---
