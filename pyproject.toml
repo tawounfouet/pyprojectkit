@@ -22,7 +22,7 @@ classifiers = [
 pyprojectkit = "pyprojectkit.m1.cli:main"
 
 [project.optional-dependencies]
-test = ["pytest>=8,<10"]
+test = ["pytest>=8,<10", "cryptography>=45,<47"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
