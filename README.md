@@ -6,7 +6,7 @@
 
 M2-A/B/C propose des contrats d'OperatingBrief, un mandat hôte, une inbox SQLite pour les reports, une réconciliation idempotente et une Query de reprise. Les deux pilotes sont **synthétiques** ; aucun runtime Pythos réel ni commande externe privilégiée n'est implémenté. Les PR #16/#17/#18 sont fusionnées, mais **Q-M2 reste en attente de revue humaine indépendante** avec AC-031 et AC-034 partiels. Voir [issue #20](https://github.com/tawounfouet/pyprojectkit/issues/20).
 
-Le chantier R3.1 documente la baseline et les collisions des plans M3 (26/27). [Audit R3.1](docs/r3/2026-11-05_R3_1_BASELINE_RECONCILIATION.md) et [matrice 26/27](docs/r3/2026-11-05_R3_1_M3_26_27_CROSSWALK.md).
+Le chantier R3.1 stabilise la baseline en branche documentaire, sans modification du code métier. La précédence des plans 26/27 a été arbitrée pour le cadrage, avec texte 27 incomplet et aucune fusion autorisée. [Audit R3.1](docs/r3/2026-11-05_R3_1_BASELINE_RECONCILIATION.md), [matrice 26/27](docs/r3/2026-11-05_R3_1_M3_26_27_CROSSWALK.md) et [registre des décisions](docs/r3/2026-11-05_R3_1_ARBITRATION_AND_LIMITED_CLOSEOUT.md).
 
 ## Portée du prototype
 
