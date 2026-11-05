@@ -1,6 +1,12 @@
-# PyProjectKit - prototype M0 + M1 (registre local)
+# PyProjectKit - noyau M0, registre M1 et pilote synthétique M2
 
-**Statut** : prototype alpha M0 + M1 qualifié pour un **pilote local synthétique** avec [accord conditionnel d'intégration](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md). Cette décision ne vaut pas autorisation de publication, d'usage en production ni de traitement de données réelles sensibles. **Licence en attente, aucune publication PyPI.**
+**Statut (2026-11-05)** : prototype alpha M0/M1/M2 intégré dans `main` et qualifié techniquement uniquement sur données synthétiques. Gate humain Q-M2 **en attente**, protection de `main` absente. Historique : [accord conditionnel d'intégration](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md). Cette décision ne vaut pas autorisation de publication, d'usage en production ni de traitement de données réelles sensibles. **Licence en attente, aucune publication PyPI.**
+
+## M2 - périmètre actuellement intégré
+
+M2-A/B/C propose des contrats d'OperatingBrief, un mandat hôte, une inbox SQLite pour les reports, une réconciliation idempotente et une Query de reprise. Les deux pilotes sont **synthétiques** ; aucun runtime Pythos réel ni commande externe privilégiée n'est implémenté. Les PR #16/#17/#18 sont fusionnées, mais **Q-M2 reste en attente de revue humaine indépendante** avec AC-031 et AC-034 partiels. Voir [issue #20](https://github.com/tawounfouet/pyprojectkit/issues/20).
+
+Le chantier R3.1 documente la baseline et les collisions des plans M3 (26/27). [Audit R3.1](docs/r3/2026-11-05_R3_1_BASELINE_RECONCILIATION.md) et [matrice 26/27](docs/r3/2026-11-05_R3_1_M3_26_27_CROSSWALK.md).
 
 ## Portée du prototype
 
@@ -67,4 +73,4 @@ Les preuves GitHub Actions, la matrice AC-013..AC-026 et les limites seront cons
 
 Le contrôleur M1 filtre maintenant les projets d'un même scope par **propriétaire** ou par partage explicite provenant de l'hôte vérifié : `PROJECT_VIEW_ALL` ou `PROJECT_VIEW:<uuid>`. Un droit `PROJECT_VIEW` seul ne donne plus accès aux projets d'autres propriétaires. Les Queries, comptes, facettes, exports et reprises respectent cette restriction. Cette propriété s'applique au pilote local avec processus hôte de confiance, pas à un service exposé au code hostile.
 
-**CI** : 41 tests pytest par version sur Python 3.12/3.13, `mypy --strict`, wheel installée hors ligne dans un environnement virtuel isolé. Dossier : [Gate alpha](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) et [rapport M1](docs/qualification/M1_REPORT.md).
+**CI sur main (2026-11-04, SHA `a523d9c61c30ef41afe3bc9cf0723beafe3c2d38`)** : [run #208](https://github.com/tawounfouet/pyprojectkit/actions/runs/41919258680) - 168 tests pytest par Python 3.12/3.13, `mypy --strict`, wheel isolée. Ces résultats ne valent pas autorisation de production ou publication. Dossier historique : [Gate alpha](docs/gates/2026-11-03_R0_M0_M1_MAIN_INTEGRATION_GATE.md) et [rapport M1](docs/qualification/M1_REPORT.md).
