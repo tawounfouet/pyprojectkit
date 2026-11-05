@@ -73,3 +73,18 @@ Le noyau reste isolé, la PR demeure un brouillon et aucune migration M1/M2 n'es
 - La CI dédiée VS01 s'exécute également sur `main` après fusion et vérifie l'import depuis une wheel installée hors du dépôt.
 - **Non-équivalence explicite** : `pyprojectkit` conserve ses interfaces UUID et permission grants ; `pyprojectkit_next` est un nouveau contrat avec IDs chaîne canoniques, API immuable et politique owner+scope stricte. Aucune substitution transparente n'est annoncée.
 - G0 reste `PENDING`, Q-M2 garde sa qualification séparée. Aucun archivage ni suppression legacy n'est dans ce milestone.
+
+## Qualification ARCH-03..05 - dossier G2 (5 novembre 2026)
+
+La suite `tests/test_reboot_g2_security_contract.py` renforce la non-divulgation :
+une ressource absente et une ressource appartenant à un autre propriétaire
+renvoient désormais le même `NotFound("ressource indisponible")`.
+Il s'agit d'un changement d'exception observable du package expérimental,
+non d'une rupture de l'API historique `pyprojectkit`.
+
+La nouvelle matrice `docs/contracts/M0_M1_M2_BEHAVIORAL_PARITY_MATRIX.md`
+préserve explicitement `PAR-06..10` en `DEFERRED` et `PAR-04/05` en `PARTIAL`.
+L'existence d'un `ActorContext` constructible par l'appelant n'implique aucune
+authentification ; l'hôte de confiance est requis avant une exposition HTTP.
+Les dossiers de qualification sont sous `docs/qualification/`, avec G2
+**PENDING** jusqu'aux prérequis G1 et revue humaine applicables.

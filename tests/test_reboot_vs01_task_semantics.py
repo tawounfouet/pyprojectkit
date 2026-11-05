@@ -8,7 +8,7 @@ import pytest
 
 from pyprojectkit_next import (
     AccessDenied, ActorContext, Conflict, InMemoryDatabase, InvalidStateTransition,
-    InvalidValue, MilestoneId, OwnerScopePolicy, Project, ProjectId, ProjectService, Task, TaskId,
+    InvalidValue, MilestoneId, NotFound, OwnerScopePolicy, Project, ProjectId, ProjectService, Task, TaskId,
     TaskStatus,
 )
 
@@ -260,11 +260,11 @@ def test_auth_denies_assignment_progress_review_return_without_event(
     before = db.events
     for outsider in (ActorContext("other", frozenset({"scope"})),
                      ActorContext("owner", frozenset({"other-scope"}))):
-        with pytest.raises(AccessDenied):
+        with pytest.raises(NotFound, match="ressource indisponible"):
             svc.assign_task(outsider, task.id, "someone")
-        with pytest.raises(AccessDenied):
+        with pytest.raises(NotFound, match="ressource indisponible"):
             svc.update_task_progress(outsider, task.id, 10)
-        with pytest.raises(AccessDenied):
+        with pytest.raises(NotFound, match="ressource indisponible"):
             svc.return_task_to_work(outsider, task.id)
     assert db.events == before
 
