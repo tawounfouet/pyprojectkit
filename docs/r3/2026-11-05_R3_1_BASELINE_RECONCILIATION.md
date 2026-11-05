@@ -151,5 +151,6 @@ R3.1 ne peut être déclaré `CLOSED` que lorsque :
 - [Issue #19 : protection de main](https://github.com/tawounfouet/pyprojectkit/issues/19)
 - [Issue #20 : revue Q-M2](https://github.com/tawounfouet/pyprojectkit/issues/20)
 - [Issue #13 : release hardening](https://github.com/tawounfouet/pyprojectkit/issues/13)
-- [Plan 26 M3](../../README.md) : source locale hors du dépôt à importer sous revue.
+- Plan 26 M3 : texte intégral fourni dans le projet ChatGPT, non importé dans `main` au contrôle du 2026-11-05.
 - [Crosswalk R3.1](2026-11-05_R3_1_M3_26_27_CROSSWALK.md)
+- [Contrat de non-régression M0/M1/M2](2026-11-05_R3_1_NON_REGRESSION_CONTRACT.md)
