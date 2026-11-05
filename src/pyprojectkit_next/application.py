@@ -70,6 +70,19 @@ class ProjectService:
         with self._uow_factory() as uow:
             return self._project(uow, actor, id, "project:read")
 
+    def list_projects(self, actor: ActorContext) -> tuple[Project, ...]:
+        """Lecture fail-closed : ne révèle jamais les projets hors owner/scope."""
+        if not actor.subject_id or not actor.allowed_scopes:
+            raise AccessDenied("acteur non authentifié ou scope absent")
+        with self._uow_factory() as uow:
+            visible = []
+            for project in uow.list_projects():
+                if project.owner_id == actor.subject_id and project.scope in actor.allowed_scopes:
+                    self._auth.require(actor, "project:read", scope=project.scope,
+                                       owner_id=project.owner_id)
+                    visible.append(project)
+            return tuple(sorted(visible, key=lambda project: project.id.value))
+
     def _change_project(self, actor: ActorContext, id: ProjectId, command: str) -> Project:
         with self._uow_factory() as uow:
             project = self._project(uow, actor, id)

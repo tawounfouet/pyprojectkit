@@ -70,6 +70,10 @@ class InMemoryUnitOfWork:
         except KeyError as ex:
             raise NotFound("projet introuvable") from ex
 
+    def list_projects(self) -> tuple[Project, ...]:
+        self._require_open()
+        return tuple(self._projects.values())
+
     def get_task(self, id: TaskId) -> Task:
         self._require_open()
         try:

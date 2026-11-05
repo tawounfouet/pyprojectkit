@@ -5,6 +5,7 @@ from collections import deque
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from enum import Enum
+from uuid import UUID
 
 
 class DomainError(Exception):
@@ -46,8 +47,14 @@ def _required(value: str, field: str) -> None:
 
 
 def _aware(value: datetime | None, field: str) -> None:
-    if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+    if value is not None and (not isinstance(value, datetime) or
+                              value.tzinfo is None or value.utcoffset() is None):
         raise InvalidValue(f"{field} doit avoir un fuseau horaire")
+
+
+def _require_aware(value: datetime, field: str) -> None:
+    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
+        raise InvalidValue(f"{field} exige un horodatage timezone-aware")
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +64,23 @@ class ProjectId:
     def __post_init__(self) -> None:
         _required(self.value, "ProjectId")
 
+    @classmethod
+    def from_uuid(cls, value: UUID) -> ProjectId:
+        """Importer explicitement un identifiant UUID de M0, sans couplage au legacy."""
+        if not isinstance(value, UUID):
+            raise InvalidValue("UUID attendu")
+        return cls(str(value))
+
+    def to_uuid(self) -> UUID:
+        """Réexporter uniquement les IDs canoniques UUID, refuser les IDs fictifs."""
+        try:
+            parsed = UUID(self.value)
+        except (ValueError, AttributeError) as error:
+            raise InvalidValue("identifiant non convertible vers M0 UUID") from error
+        if str(parsed) != self.value:
+            raise InvalidValue("UUID non canonique")
+        return parsed
+
 
 @dataclass(frozen=True, slots=True)
 class TaskId:
@@ -65,6 +89,23 @@ class TaskId:
     def __post_init__(self) -> None:
         _required(self.value, "TaskId")
 
+    @classmethod
+    def from_uuid(cls, value: UUID) -> TaskId:
+        """Importer explicitement un identifiant UUID de M0, sans couplage au legacy."""
+        if not isinstance(value, UUID):
+            raise InvalidValue("UUID attendu")
+        return cls(str(value))
+
+    def to_uuid(self) -> UUID:
+        """Réexporter uniquement les IDs canoniques UUID, refuser les IDs fictifs."""
+        try:
+            parsed = UUID(self.value)
+        except (ValueError, AttributeError) as error:
+            raise InvalidValue("identifiant non convertible vers M0 UUID") from error
+        if str(parsed) != self.value:
+            raise InvalidValue("UUID non canonique")
+        return parsed
+
 
 @dataclass(frozen=True, slots=True)
 class MilestoneId:
@@ -72,6 +113,23 @@ class MilestoneId:
 
     def __post_init__(self) -> None:
         _required(self.value, "MilestoneId")
+
+    @classmethod
+    def from_uuid(cls, value: UUID) -> MilestoneId:
+        """Importer explicitement un identifiant UUID de M0, sans couplage au legacy."""
+        if not isinstance(value, UUID):
+            raise InvalidValue("UUID attendu")
+        return cls(str(value))
+
+    def to_uuid(self) -> UUID:
+        """Réexporter uniquement les IDs canoniques UUID, refuser les IDs fictifs."""
+        try:
+            parsed = UUID(self.value)
+        except (ValueError, AttributeError) as error:
+            raise InvalidValue("identifiant non convertible vers M0 UUID") from error
+        if str(parsed) != self.value:
+            raise InvalidValue("UUID non canonique")
+        return parsed
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,13 +140,15 @@ class Milestone:
     reached_at: datetime | None = None
 
     def __post_init__(self) -> None:
+        if not isinstance(self.id, MilestoneId):
+            raise InvalidValue("MilestoneId requis")
         _required(self.name, "milestone.name")
         if not isinstance(self.target_date, date) or isinstance(self.target_date, datetime):
             raise InvalidValue("target_date doit être une date civile")
         _aware(self.reached_at, "reached_at")
 
     def reach(self, at: datetime) -> Milestone:
-        _aware(at, "at")
+        _require_aware(at, "at")
         if self.reached_at is not None:
             raise InvalidStateTransition("jalon déjà atteint")
         return replace(self, reached_at=at)
@@ -126,6 +186,8 @@ class Project:
     milestones: tuple[Milestone, ...] = ()
 
     def __post_init__(self) -> None:
+        if not isinstance(self.id, ProjectId):
+            raise InvalidValue("ProjectId requis")
         _required(self.name, "name")
         _required(self.owner_id, "owner_id")
         _required(self.scope, "scope")
@@ -178,7 +240,7 @@ class Project:
         return self._transition(ProjectStatus.DRAFT, ProjectStatus.PLANNED)
 
     def start(self, at: datetime) -> Project:
-        _aware(at, "at")
+        _require_aware(at, "at")
         return self._transition(ProjectStatus.PLANNED, ProjectStatus.ACTIVE, start_at=at)
 
     def pause(self) -> Project:
@@ -188,7 +250,7 @@ class Project:
         return self._transition(ProjectStatus.ON_HOLD, ProjectStatus.ACTIVE)
 
     def complete(self, at: datetime) -> Project:
-        _aware(at, "at")
+        _require_aware(at, "at")
         return self._transition(ProjectStatus.ACTIVE, ProjectStatus.COMPLETED, end_at=at)
 
     def cancel(self) -> Project:
@@ -211,6 +273,8 @@ class Task:
     progress: int = 0
 
     def __post_init__(self) -> None:
+        if not isinstance(self.id, TaskId) or not isinstance(self.project_id, ProjectId):
+            raise InvalidValue("TaskId et ProjectId requis")
         _required(self.title, "title")
         if not isinstance(self.status, TaskStatus) or self.version < 1:
             raise InvalidValue("statut ou version de tâche invalide")
@@ -262,16 +326,16 @@ class Task:
     def ready(self) -> Task:
         return self._transition((TaskStatus.TODO,), TaskStatus.READY)
 
-    def start(self, at: datetime | None = None) -> Task:
-        _aware(at, "at")
+    def start(self, at: datetime) -> Task:
+        _require_aware(at, "at")
         return self._transition((TaskStatus.READY,), TaskStatus.IN_PROGRESS, start_at=at)
 
     def block(self, reason: str) -> Task:
         _required(reason, "reason")
         return self._transition((TaskStatus.IN_PROGRESS,), TaskStatus.BLOCKED, blocked_reason=reason)
 
-    def unblock(self, at: datetime | None = None) -> Task:
-        _aware(at, "at")
+    def unblock(self, at: datetime) -> Task:
+        _require_aware(at, "at")
         return self._transition((TaskStatus.BLOCKED,), TaskStatus.IN_PROGRESS,
                                 blocked_reason=None, start_at=at)
 
@@ -282,7 +346,7 @@ class Task:
         return self._transition((TaskStatus.IN_REVIEW,), TaskStatus.IN_PROGRESS)
 
     def complete(self, at: datetime) -> Task:
-        _aware(at, "at")
+        _require_aware(at, "at")
         return self._transition((TaskStatus.IN_PROGRESS, TaskStatus.IN_REVIEW), TaskStatus.DONE,
                                 end_at=at, progress=100)
 

@@ -31,14 +31,14 @@ Ce changement ajoute `pyprojectkit_next` dans **le même dépôt**, sans remplac
 
 ```bash
 python -m pip install -e '.[test]'
-python -m pytest -q tests/test_reboot_vs01.py tests/test_reboot_vs01_parity.py
+python -m pytest -q tests/test_reboot_vs01.py tests/test_reboot_vs01_parity.py tests/test_reboot_vs01_task_semantics.py tests/test_reboot_vs01_contract.py
 python examples/reboot_vs01_demo.py
 ```
 
 ## Règles avant une suite
 
 1. Préserver la CI historique, les 168 tests legacy et les imports `pyprojectkit`.
-2. Ne pas fusionner cette PR avant CI complète et décision de gouvernance applicable.
+2. Fusion additive seulement après CI complète au SHA exact et mandat humain explicite : donnée dans la session de clôture. La fusion ne constitue pas une autorisation de remplacer le legacy.
 3. Ne pas écraser `main` ni modifier/supprimer M0/M1/M2 avant archive indépendante restaurée et mandat distinct.
 4. Assumer qu'une revue indépendante Q-M2 demeure à traiter séparément, sans auto-approbation.
 
@@ -48,7 +48,7 @@ python examples/reboot_vs01_demo.py
 - Démarrage ou déblocage de tâche impossible tant qu'un prérequis n'est pas `DONE`.
 - Jalons datés et immuables, création et atteinte transactionnelles.
 - Concurrence conservatrice : un commit d'écriture invalide tout snapshot ancien ; les graphes ne se corrompent pas.
-- Différences non résolues : IDs `str` (M0 legacy : UUID), assignation, progression, `IN_REVIEW -> IN_PROGRESS`, contrats publics et permissions fines ; pas de parité totale revendiquée.
+- Différences persistantes : API publique et permissions fines ; conversion UUID explicite au bord, affectation, progression et retour de revue implémentés et testés. La parité totale des contrats de M0 n'est pas revendiquée.
 
 ## Extension de parité M0 : affectation, progression et revue
 
@@ -63,3 +63,13 @@ Statut : implémentation expérimentale additive, sans changement de `pyprojectk
 - Tests de contrat et tests négatifs dans `tests/test_reboot_vs01_task_semantics.py`, exécutés en CI sur Python 3.12 et 3.13. La parité complète de tous les contrats publics M0 reste à qualifier, notamment le format historique des identifiants et la granularité de permission.
 
 Le noyau reste isolé, la PR demeure un brouillon et aucune migration M1/M2 n'est autorisée par cette extension.
+
+## Pré-clôture technique VS01 : contrat et portabilité
+
+- `list_projects` : lecture strictement limitée au propriétaire et aux scopes autorisés, sans émission d'événements.
+- Frontière UUID : `ProjectId`, `TaskId` et `MilestoneId` exposent `from_uuid()` et `to_uuid()` avec validation canonique. Les IDs synthétiques restent valides **en interne aux tests**, mais ne traversent pas implicitement l'API historique M0.
+- Validation renforcée des ID d'entités et des horodatages des commandes (refus de `None`, chaînes ou datetimes naïfs).
+- Scénario de parité comparative avec M0 historique, exécuté lorsque les deux packages sont disponibles : transitions et état projet/tâche, jalons, dates, IDs et compteur d'événements.
+- La CI dédiée VS01 s'exécute également sur `main` après fusion et vérifie l'import depuis une wheel installée hors du dépôt.
+- **Non-équivalence explicite** : `pyprojectkit` conserve ses interfaces UUID et permission grants ; `pyprojectkit_next` est un nouveau contrat avec IDs chaîne canoniques, API immuable et politique owner+scope stricte. Aucune substitution transparente n'est annoncée.
+- G0 reste `PENDING`, Q-M2 garde sa qualification séparée. Aucun archivage ni suppression legacy n'est dans ce milestone.
