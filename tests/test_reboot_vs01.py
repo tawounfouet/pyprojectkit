@@ -215,7 +215,7 @@ def test_owner_denied_on_commands_and_reads(harness: tuple[ProjectService, InMem
                lambda: s.plan_project(intruder, p.id),
                lambda: s.list_tasks(intruder, p.id),
                lambda: s.create_task(intruder, p.id, "T")):
-        with pytest.raises(AccessDenied):
+        with pytest.raises(NotFound, match="ressource indisponible"):
             op()
     assert before == db.events
 
@@ -227,9 +227,9 @@ def test_scope_denied_on_commands_and_reads(harness: tuple[ProjectService, InMem
     assert not db.events
     p = s.create_project(owner, "P", "INTERNAL")
     wrong_scope = ActorContext("owner-a", frozenset({"PRIVATE"}))
-    with pytest.raises(AccessDenied):
+    with pytest.raises(NotFound, match="ressource indisponible"):
         s.get_project(wrong_scope, p.id)
-    with pytest.raises(AccessDenied):
+    with pytest.raises(NotFound, match="ressource indisponible"):
         s.create_task(wrong_scope, p.id, "T")
 
 

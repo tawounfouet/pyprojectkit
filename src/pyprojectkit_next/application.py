@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from .domain import (
     AccessDenied, ClosureBlocked, Dependency, DependencyViolation, DomainEvent,
-    InvalidStateTransition, InvalidValue, Milestone, MilestoneId,
+    InvalidStateTransition, InvalidValue, Milestone, MilestoneId, NotFound,
     Project, ProjectId, ProjectStatus, Task, TaskId, TaskStatus,
 )
 from .ports import ActorContext, AuthorizationPolicy, Clock, IdFactory, UnitOfWork, UnitOfWorkFactory
@@ -53,9 +53,27 @@ class ProjectService:
 
     def _project(self, uow: UnitOfWork, actor: ActorContext, id: ProjectId,
                  action: str = "project:write") -> Project:
-        project = uow.get_project(id)
-        self._auth.require(actor, action, scope=project.scope, owner_id=project.owner_id)
-        return project
+        """Masquer uniformément l'existence des projets absents ou invisibles.
+
+        Cette frontière applicative n'authentifie pas l'acteur : le host doit
+        construire ActorContext à partir d'une identité vérifiée.
+        """
+        try:
+            project = uow.get_project(id)
+            self._auth.require(actor, action, scope=project.scope, owner_id=project.owner_id)
+            return project
+        except (NotFound, AccessDenied):
+            raise NotFound("ressource indisponible") from None
+
+    def _task(self, uow: UnitOfWork, actor: ActorContext, id: TaskId,
+              action: str) -> Task:
+        """Résoudre une tâche sans exposer si son parent est absent ou caché."""
+        try:
+            task = uow.get_task(id)
+            self._project(uow, actor, task.project_id, action)
+            return task
+        except NotFound:
+            raise NotFound("ressource indisponible") from None
 
     def create_project(self, actor: ActorContext, name: str, scope: str) -> Project:
         self._auth.require(actor, "project:create", scope=scope, owner_id=actor.subject_id)
@@ -172,8 +190,8 @@ class ProjectService:
 
     def assign_task(self, actor: ActorContext, id: TaskId, assignee_id: str) -> Task:
         with self._uow_factory() as uow:
-            task = uow.get_task(id)
-            project = self._project(uow, actor, task.project_id, "task:write")
+            task = self._task(uow, actor, id, "task:write")
+            project = uow.get_project(task.project_id)
             if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
                 raise InvalidStateTransition("projet terminal")
             updated = task.assign(assignee_id)
@@ -184,8 +202,8 @@ class ProjectService:
 
     def update_task_progress(self, actor: ActorContext, id: TaskId, progress: int) -> Task:
         with self._uow_factory() as uow:
-            task = uow.get_task(id)
-            project = self._project(uow, actor, task.project_id, "task:write")
+            task = self._task(uow, actor, id, "task:write")
+            project = uow.get_project(task.project_id)
             if project.status != ProjectStatus.ACTIVE:
                 raise InvalidStateTransition("progression exige un projet actif")
             updated = task.set_progress(progress)
@@ -196,10 +214,9 @@ class ProjectService:
 
     def add_dependency(self, actor: ActorContext, successor: TaskId, predecessor: TaskId) -> Dependency:
         with self._uow_factory() as uow:
-            child = uow.get_task(successor)
-            parent = uow.get_task(predecessor)
-            project = self._project(uow, actor, child.project_id, "task:write")
-            self._project(uow, actor, parent.project_id, "task:write")
+            child = self._task(uow, actor, successor, "task:write")
+            parent = self._task(uow, actor, predecessor, "task:write")
+            project = uow.get_project(child.project_id)
             if child.project_id != parent.project_id:
                 raise DependencyViolation("dépendance inter-projets interdite")
             if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
@@ -225,9 +242,7 @@ class ProjectService:
 
     def get_task(self, actor: ActorContext, id: TaskId) -> Task:
         with self._uow_factory() as uow:
-            task = uow.get_task(id)
-            self._project(uow, actor, task.project_id, "task:read")
-            return task
+            return self._task(uow, actor, id, "task:read")
 
     def list_tasks(self, actor: ActorContext, project_id: ProjectId) -> tuple[Task, ...]:
         with self._uow_factory() as uow:
@@ -237,8 +252,8 @@ class ProjectService:
     def _change_task(self, actor: ActorContext, id: TaskId, command: str,
                      reason: str | None = None) -> Task:
         with self._uow_factory() as uow:
-            task = uow.get_task(id)
-            project = self._project(uow, actor, task.project_id, "task:write")
+            task = self._task(uow, actor, id, "task:write")
+            project = uow.get_project(task.project_id)
             if project.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
                 raise InvalidStateTransition("projet terminal")
             if command == "ready":

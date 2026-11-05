@@ -162,7 +162,7 @@ def test_milestone_owner_and_scope_denied_without_event(
                      lambda: svc.get_milestone(outsider, p.id, m.id),
                      lambda: svc.reach_milestone(outsider, p.id, m.id),
                      lambda: svc.add_milestone(outsider, p.id, "X", date(2027, 1, 1))):
-            with pytest.raises(AccessDenied):
+            with pytest.raises(NotFound, match="ressource indisponible"):
                 call()
     assert db.events == before
 
@@ -222,7 +222,7 @@ def test_cross_project_and_scope_edges_rejected(
     third = svc.create_project(other_scope, "Secret", "PRIVATE")
     secret = svc.create_task(other_scope, third.id, "Private")
     before = db.events
-    with pytest.raises(AccessDenied):
+    with pytest.raises(NotFound, match="ressource indisponible"):
         svc.add_dependency(actor, a.id, secret.id)
     assert db.events == before
     assert svc.list_dependencies(actor, first.id) == ()
@@ -235,7 +235,7 @@ def test_graph_reads_are_scoped_and_stable(env: tuple[ProjectService, InMemoryDa
     svc.add_dependency(actor, b.id, a.id)
     before = db.events
     outsider = ActorContext("outsider", frozenset({"INTERNAL"}))
-    with pytest.raises(AccessDenied):
+    with pytest.raises(NotFound, match="ressource indisponible"):
         svc.list_dependencies(outsider, pid)
     assert svc.list_dependencies(actor, pid) == (Dependency(b.id, a.id),)
     assert svc.list_dependencies(actor, pid) == svc.list_dependencies(actor, pid)

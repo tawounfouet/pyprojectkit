@@ -1,0 +1,11 @@
+{
+  "schema": "pyprojectkit.g2.acceptance.fixtures.v1",
+  "classification": "SYNTHETIC_ONLY",
+  "cases": [
+    {"id": "O03-01", "kind": "create_draft", "name": "Projet de démonstration", "scope": "team-a", "expected_status": "DRAFT"},
+    {"id": "O03-02", "kind": "lifecycle", "name": "Démonstration cycle", "scope": "team-a", "expected_status": "ACTIVE"},
+    {"id": "O03-03", "kind": "invalid_complete", "name": "Clôture interdite", "scope": "team-a", "expected_error": "CLOSURE_BLOCKED"},
+    {"id": "O03-12", "kind": "cross_owner", "name": "Dossier confidentiel fictif", "scope": "team-a", "expected_error": "NOT_FOUND"},
+    {"id": "O03-16", "kind": "clock_determinism", "name": "Horloge fixe", "scope": "team-a", "expected_occurred_at": "2026-11-05T20:00:00+00:00"}
+  ]
+}
