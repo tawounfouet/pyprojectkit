@@ -1,0 +1,36 @@
+name: Legacy G1 - encrypted custody tool synthetic tests
+on:
+  pull_request:
+    paths:
+      - 'scripts/g1_encrypted_custody.py'
+      - 'tests/test_g1_encrypted_custody.py'
+      - '.github/workflows/legacy-g1-encrypted-custody.yml'
+      - 'docs/legacy/G1_ENCRYPTED_CUSTODY_OPERATOR_RUNBOOK.md'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/g1_encrypted_custody.py'
+      - 'tests/test_g1_encrypted_custody.py'
+      - '.github/workflows/legacy-g1-encrypted-custody.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g1-custody-synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install test-only cryptography dependency (not a core runtime dependency)
+        run: python -m pip install -e '.[test]' 'cryptography>=45,<47'
+      - name: Exercise authenticated encryption on synthetic repositories only
+        run: python -m pytest -q tests/test_g1_encrypted_custody.py
+      # NEVER run `seal` against this repository on a GitHub runner.
+      # NEVER upload a git bundle, key, plaintext, encrypted bundle or ciphertext artifact.
