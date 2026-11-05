@@ -30,7 +30,7 @@ jobs:
           python-version: '3.13'
       - name: Test local restore tool using synthetic git repositories
         run: |
-          python -m pip install 'pytest>=8,<10'
+          python -m pip install -e '.[test]'
           python -m pytest -q tests/test_g1_legacy_restore_drill.py
       - name: Verify historical reference restores in isolated clone
         run: |
