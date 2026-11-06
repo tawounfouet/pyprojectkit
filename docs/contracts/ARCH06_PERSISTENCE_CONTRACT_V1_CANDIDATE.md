@@ -28,19 +28,23 @@ Le port `UnitOfWork` de `src/pyprojectkit_next/ports.py` expose `get/list/add/sa
 |---|---|---|---|
 | `C06-01` Atomicité Project/Task + graphe + journal local | Sans commit, aucune écriture ; avec commit, toutes ou aucune | Test de rollback | Non implémenté |
 | `C06-02` CAS et isolation | Une transaction obsolète ne remplace pas un commit concurrent | Conflit interleaving | Non implémenté |
-| `C06-03` Fermeture et création concurrentes | Pas de projet terminé avec tâche ouverte, y compris en cas d'appel direct à l'UoW | Interleaving et contrôle du snapshot final au commit | Non implémenté |
+| `C06-03` Fermeture et création concurrentes | Pas de projet terminé avec tâche ouverte apparue après le contrôle, même si le port UoW est utilisé directement | Interleavings + validation au commit du snapshot final | Non implémenté |
 | `C06-04` Dépendances acycliques | Refus cycle et inter-projets ; état inchangé | Tests graphe | Non implémenté |
 | `C06-05` Domain Events | Aucun event avant confirmation ; aucune réussite inventée | Tests d'événements locaux | Outbox durable à concevoir |
 | `C06-06` Autorisation de lecture | Même résultat sur une Query lorsqu'on ajoute des objets cachés | Test métamorphique | RegistryReader différé |
 | `C06-07` Persistance durable | Réouverture après arrêt du processus conserve identités, statuts et versions | Non applicable | Non implémenté |
 | `C06-08` Migration et recovery | Schéma checksummé ; restauration et corruption fail-closed | Non applicable | Non implémenté |
-| `C06-09` Résultat de commit ambigu | Pas de succès fictif ni de retry aveugle ; réconciliation sur intention identifiée | Non représentable sur Memory | Contrat à définir |
+| `C06-09` Résultat de commit ambigu | Pas de succès fictif ni de retry aveugle ; réconciliation sur intention identifiée | Simulateur séparé, non transactionnel, testé | Non implémenté |
 
-## 3.1. Invariant inter-agrégats au point de commit
+## 3.1. Invariant inter-agrégats renforcé sur Memory
 
-Le refus de clôture ne peut pas reposer uniquement sur `ProjectService`. L'adapter `InMemoryUnitOfWork` rejette `add_task` pour un projet `COMPLETED` ou `CANCELLED` et vérifie avant `commit()` qu'aucun projet `COMPLETED` ne possède une tâche autre que `DONE` ou `CANCELLED`. Le contrôle porte sur le snapshot final : il autorise donc la clôture coordonnée de tâches et du projet au sein d'une transaction unique.
+La validation de `C06-03` ne peut pas reposer seulement sur `ProjectService` : un appel direct à `UnitOfWork` ne doit pas persister un projet `COMPLETED` tant qu'il reste une tâche non terminale. `InMemoryUnitOfWork.commit()` contrôle l'état final du snapshot avant écriture et émission d'événement. `add_task()` refuse les parents `COMPLETED` ou `CANCELLED`. La clôture coordonnée d'une tâche et de son projet dans une même UoW reste autorisée. La même règle devra être imposée atomiquement dans l'adaptateur SQLite futur.
 
-Les tests `tests/test_arch06_memory_integrity.py` caractérisent sept cas, dont refus et absence d'émission d'événement sur une tentative de commit invalide. Ce même invariant devra être garanti atomiquement dans le futur adapter SQLite. La vérification Memory ne démontre ni la durabilité, ni l'isolation entre processus, ni l'approbation de G3.
+**Ceci protège la cohérence locale, sans établir la durabilité, une isolation interprocessus ni une autorisation G3.**
+
+## 3.2. Contrat expérimental de résultat de commit ambigu
+
+La simulation de la perte d'accusé et de l'idempotence est maintenant exécutable dans `pyprojectkit_next.recovery`. Son journal volatile ne partage aucune transaction avec `InMemoryUnitOfWork` : **elle ne constitue pas une preuve de persistance ou de reprise après redémarrage**. Voir `docs/contracts/ARCH06_COMMIT_OUTCOME_AND_IDEMPOTENCY_SIMULATION_V1.md` et ses oracles `C06-09.1..8`. Le futur port SQLite devra qualifier `RS-AC-09` dans une transaction réellement durable, sous les gates applicables.
 
 ## 4. Sémantique d'erreur attendue
 
@@ -55,7 +59,8 @@ Les erreurs actuelles du noyau sont `Conflict`, `NotFound`, `InvalidStateTransit
 | `RS-AC-03` | `MEMORY_PASS_ONLY` | Interleaving in-process, pas multiprocessus |
 | `RS-AC-04` | `MEMORY_PASS_ONLY` | Course fermeture/création bornée |
 | `RS-AC-05` | `MEMORY_PASS_ONLY` | Cycle et cross-project ; concurrency durable non démontrée |
-| `RS-AC-06..09` | `NOT_IMPLEMENTED` | Migrations, backup/restore, corruption, commit ambigu |
+| `RS-AC-06..08` | `NOT_IMPLEMENTED` | Migrations, backup/restore, corruption |
+| `RS-AC-09` | `SIMULATOR_ONLY` | Failpoints et réconciliation en mémoire seulement, sans backend durable |
 | `RS-AC-10` | `MEMORY_PASS_ONLY` | Filtrage owner/scope sur Query exposée |
 | `RS-AC-11` | `PARTIAL` | Métamorphisme `list_projects` oui ; count/facet/page inexistants |
 | `RS-AC-12..13` | `DEFERRED` | Portfolio multiple et référence fournisseur |
