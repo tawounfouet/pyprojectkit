@@ -28,13 +28,19 @@ Le port `UnitOfWork` de `src/pyprojectkit_next/ports.py` expose `get/list/add/sa
 |---|---|---|---|
 | `C06-01` Atomicité Project/Task + graphe + journal local | Sans commit, aucune écriture ; avec commit, toutes ou aucune | Test de rollback | Non implémenté |
 | `C06-02` CAS et isolation | Une transaction obsolète ne remplace pas un commit concurrent | Conflit interleaving | Non implémenté |
-| `C06-03` Fermeture et création concurrentes | Pas de projet terminé avec tâche ouverte apparue après le contrôle | Deux ordres de commits testés | Non implémenté |
+| `C06-03` Fermeture et création concurrentes | Pas de projet terminé avec tâche ouverte, y compris en cas d'appel direct à l'UoW | Interleaving et contrôle du snapshot final au commit | Non implémenté |
 | `C06-04` Dépendances acycliques | Refus cycle et inter-projets ; état inchangé | Tests graphe | Non implémenté |
 | `C06-05` Domain Events | Aucun event avant confirmation ; aucune réussite inventée | Tests d'événements locaux | Outbox durable à concevoir |
 | `C06-06` Autorisation de lecture | Même résultat sur une Query lorsqu'on ajoute des objets cachés | Test métamorphique | RegistryReader différé |
 | `C06-07` Persistance durable | Réouverture après arrêt du processus conserve identités, statuts et versions | Non applicable | Non implémenté |
 | `C06-08` Migration et recovery | Schéma checksummé ; restauration et corruption fail-closed | Non applicable | Non implémenté |
 | `C06-09` Résultat de commit ambigu | Pas de succès fictif ni de retry aveugle ; réconciliation sur intention identifiée | Non représentable sur Memory | Contrat à définir |
+
+## 3.1. Invariant inter-agrégats au point de commit
+
+Le refus de clôture ne peut pas reposer uniquement sur `ProjectService`. L'adapter `InMemoryUnitOfWork` rejette `add_task` pour un projet `COMPLETED` ou `CANCELLED` et vérifie avant `commit()` qu'aucun projet `COMPLETED` ne possède une tâche autre que `DONE` ou `CANCELLED`. Le contrôle porte sur le snapshot final : il autorise donc la clôture coordonnée de tâches et du projet au sein d'une transaction unique.
+
+Les tests `tests/test_arch06_memory_integrity.py` caractérisent sept cas, dont refus et absence d'émission d'événement sur une tentative de commit invalide. Ce même invariant devra être garanti atomiquement dans le futur adapter SQLite. La vérification Memory ne démontre ni la durabilité, ni l'isolation entre processus, ni l'approbation de G3.
 
 ## 4. Sémantique d'erreur attendue
 
