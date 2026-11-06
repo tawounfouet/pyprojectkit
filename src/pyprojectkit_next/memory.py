@@ -4,8 +4,9 @@ from __future__ import annotations
 from threading import RLock
 
 from .domain import (
-    Conflict, Dependency, DependencyViolation, DomainEvent, NotFound,
-    Project, ProjectId, ProjectStatus, Task, TaskId, assert_acyclic,
+    ClosureBlocked, Conflict, Dependency, DependencyViolation, DomainEvent,
+    InvalidStateTransition, NotFound, Project, ProjectId, ProjectStatus,
+    Task, TaskId, TaskStatus, assert_acyclic,
 )
 
 
@@ -125,7 +126,9 @@ class InMemoryUnitOfWork:
 
     def add_task(self, task: Task) -> None:
         self._require_open()
-        self.get_project(task.project_id)
+        parent = self.get_project(task.project_id)
+        if parent.status in {ProjectStatus.COMPLETED, ProjectStatus.CANCELLED}:
+            raise InvalidStateTransition("impossible d'ajouter une tâche à un projet terminal")
         if task.id in self._tasks:
             raise Conflict("identifiant de tâche déjà utilisé")
         self._tasks[task.id] = task
@@ -152,6 +155,18 @@ class InMemoryUnitOfWork:
                 if self._db._revision != self._baseline:
                     raise Conflict("état modifié par une transaction concurrente")
                 if self._dirty:
+                    # Vérifier l'état final du snapshot au point de commit.
+                    # Une clôture coordonnée des tâches dans cette UoW est permise.
+                    projects_with_open_tasks = {
+                        task.project_id for task in self._tasks.values()
+                        if task.status not in {TaskStatus.DONE, TaskStatus.CANCELLED}
+                    }
+                    if any(
+                        p.status == ProjectStatus.COMPLETED
+                        and p.id in projects_with_open_tasks
+                        for p in self._projects.values()
+                    ):
+                        raise ClosureBlocked("clôture impossible avec tâches ouvertes")
                     self._db._projects = self._projects.copy()
                     self._db._tasks = self._tasks.copy()
                     self._db._dependencies = self._dependencies.copy()
